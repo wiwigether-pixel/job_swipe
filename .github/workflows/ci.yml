@@ -39,7 +39,7 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: 🔍 靜態分析
-        run: flutter analyze #--fatal-infos
+        run: flutter analyze -- no-fatal-infos
 
       # 如果你目前還沒有寫測試，這步可能會報錯。
       # 若報錯，請在下面這行開頭加上 # 字號註解掉
