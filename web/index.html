@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="job_swipe">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>job_swipe</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div id="loading-container">
+    <style>
+      body {
+        margin: 0;
+        background-color: #6C63FF;
+      }
+      #loading-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: white;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .loader {
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 5px solid white;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .loading-text {
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 1px;
+      }
+    </style>
+    <div class="loader"></div>
+    <div class="loading-text">JobSwipe 載入中...</div>
+  </div>
+
+  <!-- 【新增】Supabase JS SDK -->
+  <!-- 讓 Web 端的 Storage 上傳走 JS SDK，繞過 Flutter Web 的 CORS 限制 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // 【新增】初始化 Supabase JS Client
+    // 這個 client 專門給 Web 圖片上傳用
+    // anon key 是公開的，不需要隱藏
+    window.supabaseClient = null;
+
+    function initSupabaseJS(url, anonKey) {
+      if (window.supabaseClient) return;
+      window.supabaseClient = supabase.createClient(url, anonKey);
+      console.log('[Supabase JS] Client 初始化完成');
+    }
+
+    // 【新增】Web 專用的圖片上傳函數
+    // 由 Flutter 透過 js 套件呼叫這個函數
+    async function uploadImageToStorage(bucket, path, base64Data, contentType, accessToken) {
+      try {
+        if (!window.supabaseClient) {
+          throw new Error('Supabase JS Client 尚未初始化');
+        }
+
+        // 設定 access token（確保有上傳權限）
+        await window.supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: '',
+        });
+
+        // 將 base64 轉回 Uint8Array
+        const binaryStr = atob(base64Data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const { data, error } = await window.supabaseClient.storage
+          .from(bucket)
+          .upload(path, bytes, {
+            contentType: contentType,
+            upsert: true,
+          });
+
+        if (error) {
+          console.error('[Supabase JS] 上傳失敗:', error);
+          return JSON.stringify({ success: false, error: error.message });
+        }
+
+        console.log('[Supabase JS] 上傳成功:', data);
+        return JSON.stringify({ success: true, path: data.path });
+      } catch (e) {
+        console.error('[Supabase JS] 例外:', e);
+        return JSON.stringify({ success: false, error: e.toString() });
+      }
+    }
+
+    window.addEventListener('load', function(ev) {
+      // Flutter 載入後會自動覆蓋 body，loading 畫面自然消失
+    });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

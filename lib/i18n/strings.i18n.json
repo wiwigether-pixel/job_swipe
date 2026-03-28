@@ -1,0 +1,14 @@
+{
+  "auth": {
+    "login": "登入",
+    "register": "註冊新帳號",
+    "email_label": "Email",
+    "password_label": "密碼 (至少 6 碼)",
+    "confirm_register": "確認註冊",
+    "verify_email_sent": "註冊成功！請至信箱點擊驗證連結後再登入"
+  },
+  "employer": {
+    "post_job": "發布職缺",
+    "no_candidates": "目前暫無合適人才"
+  }
+}
