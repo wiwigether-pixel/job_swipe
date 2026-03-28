@@ -27,29 +27,16 @@ abstract class AppRoutes {
   static const profile = '/profile';
 }
 
-const _shellRoutes = {
-  AppRoutes.swipe,
-  AppRoutes.messages,
-  AppRoutes.matches,
-  AppRoutes.profile,
-};
-
 @Riverpod(keepAlive: true)
 GoRouter appRouter(AppRouterRef ref) {
   final authRepository = ref.watch(authRepositoryProvider);
-
-  // 用 authStateProvider (Stream) 來感知登入/登出
   final authStateAsync = ref.watch(authStateProvider);
-
-  // 用 profileProvider (Stream) 來感知 profile 完整性
   final profileAsync = ref.watch(profileProvider);
 
   final notifier = _RouterRefreshNotifier();
   ref.onDispose(notifier.dispose);
 
-  // auth 變化時通知
   ref.listen(authStateProvider, (_, __) => notifier.notify());
-  // profile 變化時通知
   ref.listen(profileProvider, (_, __) => notifier.notify());
 
   return GoRouter(
@@ -58,9 +45,11 @@ GoRouter appRouter(AppRouterRef ref) {
     redirect: (context, state) {
       final location = state.uri.path;
 
-      // 判斷登入狀態：優先用 authRepository（同步），再用 authStateAsync
       final isLoggedIn = authRepository.currentUser != null ||
           (authStateAsync.hasValue && authStateAsync.value != null);
+
+      // auth stream 還在載入，等待
+      if (authStateAsync.isLoading) return null;
 
       debugPrint('[Router] path=$location, loggedIn=$isLoggedIn');
 
@@ -70,22 +59,25 @@ GoRouter appRouter(AppRouterRef ref) {
           location == AppRoutes.splash;
 
       if (!isLoggedIn) {
-        // auth 還在載入中，維持原位
-        if (authStateAsync.isLoading) return null;
         return isEntryPage ? null : AppRoutes.welcome;
       }
 
-      // profile 還沒有值，維持原位
-      if (!profileAsync.hasValue) return null;
+      // profile stream 還沒有發出第一個值，等待
+      // hasValue=false 代表 stream 還沒回應，不是「沒有 profile」
+      if (!profileAsync.hasValue) {
+        debugPrint('[Router] profile not yet loaded, waiting...');
+        return null;
+      }
 
       final profile = profileAsync.value;
       final needsOnboarding = profile == null || !profile.isProfileComplete;
 
-      debugPrint('[Router] displayName=${profile?.displayName}, avatarUrl=${profile?.avatarUrl}, isProfileComplete=${profile?.isProfileComplete}, needsOnboarding=$needsOnboarding');
+      debugPrint('[Router] displayName=${profile?.displayName}, '
+          'isProfileComplete=${profile?.isProfileComplete}, '
+          'needsOnboarding=$needsOnboarding');
 
       if (needsOnboarding) {
-        if (location == AppRoutes.onboarding) return null;
-        return AppRoutes.onboarding;
+        return location == AppRoutes.onboarding ? null : AppRoutes.onboarding;
       }
 
       if (isEntryPage || location == AppRoutes.onboarding) {
@@ -147,6 +139,7 @@ GoRouter appRouter(AppRouterRef ref) {
   );
 }
 
+// WelcomeScreen 和 _RouterRefreshNotifier 不變，保留你原本的
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 

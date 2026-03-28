@@ -10,12 +10,13 @@ part 'profile_provider.g.dart';
 Stream<UserModel?> profile(ProfileRef ref) {
   final supabase = Supabase.instance.client;
 
-  // watch authRepository 讓 auth 狀態改變時重新建立 stream
-  // 不直接用它的 currentUser，只是借它觸發重建
-  ref.watch(authRepositoryProvider);
+  // 1. 監聽 authStateProvider 以觸發重建
+  final authAsync = ref.watch(authStateProvider);
 
-  // 從 Supabase SDK 直接取得當前 user
-  final user = supabase.auth.currentUser;
+  // 2. 【關鍵修正】顯式指定 User? 型別，解決 Object undefined getter 'id' 的問題
+  // 我們從 SDK 同步取得，或從 Provider 的異步值中取得（Fallback）
+  final User? user = supabase.auth.currentUser ?? 
+                    (authAsync.valueOrNull is User ? authAsync.valueOrNull as User : null);
 
   debugPrint('[Profile] stream build: userId=${user?.id}');
 
@@ -24,6 +25,7 @@ Stream<UserModel?> profile(ProfileRef ref) {
     return Stream.value(null);
   }
 
+  // 3. 此時 user 已被推斷為 User，.id 就不會噴錯了
   return supabase
       .from('users')
       .stream(primaryKey: ['id'])
@@ -33,9 +35,10 @@ Stream<UserModel?> profile(ProfileRef ref) {
           debugPrint('[Profile] stream: data is empty');
           return null;
         }
-        debugPrint('[Profile] stream raw: ${data.first}');
+        
         final model = UserModel.fromSupabase(data.first);
-        debugPrint('[Profile] parsed: displayName=${model.displayName}, avatarUrl=${model.avatarUrl}, isProfileComplete=${model.isProfileComplete}');
+        debugPrint('[Profile] parsed: displayName=${model.displayName}, '
+            'isProfileComplete=${model.isProfileComplete}');
         return model;
       });
 }
