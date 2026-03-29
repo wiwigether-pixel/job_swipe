@@ -14,8 +14,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. 加载 .env 文件
-  await dotenv.load();
-
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    'Running without .env file, using dart-define instead.';
+  }
+  
   // ─── 【防崩溃机制 1】捕获 Flutter Framework 内部错误 ───
   FlutterError.onError = (FlutterErrorDetails details) {
     logger.e(
