@@ -1,35 +1,43 @@
+// lib/features/swipe/presentation/swipe_card_stack.dart
 import 'package:flutter/material.dart';
-import '../../../shared/models/job_model.dart';
 import '../../../shared/widgets/swipe_card_wrapper.dart';
+import '../data/supabase_swipe_repository.dart';
 import 'job_card.dart';
+import 'user_card.dart' as uc;
 
-/// 職缺卡片疊層
-/// 職責：把 JobModel 列表轉成 JobCard Widget 列表，傳給 SwipeCardWrapper
 class SwipeCardStack extends StatelessWidget {
   const SwipeCardStack({
     super.key,
-    required this.jobs,
+    required this.cards,
     required this.onSwipe,
     required this.controller,
     this.onEmpty,
   });
 
-  final List<JobModel> jobs;
-  final void Function(JobModel job, bool isLike) onSwipe;
+  final List<SwipeCard> cards;
+  final void Function(SwipeCard card, bool isLike) onSwipe;
   final SwipeController controller;
   final VoidCallback? onEmpty;
 
   @override
   Widget build(BuildContext context) {
+    final widgets = cards.map((card) {
+      if (card.isJob) {
+        return JobCard(job: card.job!);
+      } else {
+        return uc.UserCard(userCard: card.userCard!);
+      }
+    }).toList();
+
     return SwipeCardWrapper(
       controller: controller,
-      cards: jobs.map((job) => JobCard(job: job)).toList(),
+      cards: widgets,
       onEmpty: onEmpty,
       onSwipe: (index, direction) {
-        if (index >= jobs.length) return;
-        final job = jobs[index];
+        if (index >= cards.length) return;
+        final card = cards[index];
         final isLike = direction == SwipeDirection.right;
-        onSwipe(job, isLike);
+        onSwipe(card, isLike);
       },
     );
   }

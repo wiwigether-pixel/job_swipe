@@ -6,12 +6,14 @@ part 'user_model.g.dart';
 
 enum UserRole {
   jobSeeker,
-  employer;
+  employer,
+  peer; // 新增 peer，讓 users.role 可以存同業身份
 
   static UserRole fromString(String value) {
     return switch (value) {
       'job_seeker' => UserRole.jobSeeker,
       'employer' => UserRole.employer,
+      'peer' => UserRole.peer,
       _ => UserRole.jobSeeker,
     };
   }
@@ -19,13 +21,11 @@ enum UserRole {
   String get toDbString => switch (this) {
         UserRole.jobSeeker => 'job_seeker',
         UserRole.employer => 'employer',
+        UserRole.peer => 'peer',
       };
 }
 
-/// 目前的操作身份（可以和帳號 role 不同）
-/// jobSeeker: 求職者模式，看職缺卡片
-/// employer:  雇主模式，看求職者卡片
-/// peer:      同業交流模式，看同技能的人
+/// 目前的操作身份（和 UserRole 對應）
 enum AppRole {
   jobSeeker,
   employer,
@@ -50,11 +50,10 @@ enum AppRole {
         _ => AppRole.jobSeeker,
       };
 
-  /// Cyberpunk 主題色
   Color get themeColor => switch (this) {
-        AppRole.jobSeeker => const Color(0xFF00BFFF), // 電藍
-        AppRole.employer => const Color(0xFFBF00FF),  // 電紫
-        AppRole.peer => const Color(0xFF00FF9F),      // 電綠
+        AppRole.jobSeeker => const Color(0xFF00BFFF),
+        AppRole.employer => const Color(0xFFBF00FF),
+        AppRole.peer => const Color(0xFF00FF9F),
       };
 
   IconData get icon => switch (this) {
@@ -71,7 +70,7 @@ class UserModel with _$UserModel {
   const factory UserModel({
     required String id,
     required String email,
-    required UserRole role,
+    required UserRole role, // ← 這就是當前身份，直接更新它
     required String displayName,
     String? avatarUrl,
     String? bio,
@@ -81,8 +80,6 @@ class UserModel with _$UserModel {
     int? expectedSalary,
     String? companyName,
     String? companySize,
-    // 目前操作身份（儲存在 DB，預設與 role 相同）
-    AppRole? currentRole,
     required DateTime createdAt,
     required DateTime updatedAt,
   }) = _UserModel;
@@ -93,9 +90,10 @@ class UserModel with _$UserModel {
     return hasAvatar && hasRealName;
   }
 
-  /// 取得目前有效的操作身份
-  AppRole get effectiveRole =>
-      currentRole ?? AppRole.fromString(role.toDbString);
+  /// 當前身份直接從 users.role 讀
+  /// switchRole 更新 users.role → profileProvider stream 推新值
+  /// → currentRoleProvider build() 重新執行 → UI 自動更新
+  AppRole get effectiveRole => AppRole.fromString(role.toDbString);
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
@@ -117,9 +115,6 @@ class UserModel with _$UserModel {
       expectedSalary: row['expected_salary'] as int?,
       companyName: row['company_name'] as String?,
       companySize: row['company_size'] as String?,
-      currentRole: row['current_role'] != null
-          ? AppRole.fromString(row['current_role'] as String)
-          : null,
       createdAt: row['created_at'] != null
           ? DateTime.parse(row['created_at'] as String)
           : DateTime.now(),

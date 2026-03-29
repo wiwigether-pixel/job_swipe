@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'user_model.dart';
+part of 'user_card_model.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,59 +14,57 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-UserModel _$UserModelFromJson(Map<String, dynamic> json) {
-  return _UserModel.fromJson(json);
+UserCardModel _$UserCardModelFromJson(Map<String, dynamic> json) {
+  return _UserCardModel.fromJson(json);
 }
 
 /// @nodoc
-mixin _$UserModel {
-  String get id => throw _privateConstructorUsedError;
-  String get email => throw _privateConstructorUsedError;
-  UserRole get role => throw _privateConstructorUsedError; // ← 這就是當前身份，直接更新它
+mixin _$UserCardModel {
+  String get id => throw _privateConstructorUsedError; // user_profiles.id
+  String get userId => throw _privateConstructorUsedError; // users.id
+  String get role =>
+      throw _privateConstructorUsedError; // 'job_seeker' | 'employer' | 'peer'
   String get displayName => throw _privateConstructorUsedError;
   String? get avatarUrl => throw _privateConstructorUsedError;
   String? get bio => throw _privateConstructorUsedError;
-  String? get location => throw _privateConstructorUsedError;
   List<String> get skills => throw _privateConstructorUsedError;
-  int? get experienceYears => throw _privateConstructorUsedError;
   int? get expectedSalary => throw _privateConstructorUsedError;
   String? get companyName => throw _privateConstructorUsedError;
   String? get companySize => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  bool get isOpenToOpportunity => throw _privateConstructorUsedError;
+  bool get isOpenToExchange => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $UserModelCopyWith<UserModel> get copyWith =>
+  $UserCardModelCopyWith<UserCardModel> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $UserModelCopyWith<$Res> {
-  factory $UserModelCopyWith(UserModel value, $Res Function(UserModel) then) =
-      _$UserModelCopyWithImpl<$Res, UserModel>;
+abstract class $UserCardModelCopyWith<$Res> {
+  factory $UserCardModelCopyWith(
+          UserCardModel value, $Res Function(UserCardModel) then) =
+      _$UserCardModelCopyWithImpl<$Res, UserCardModel>;
   @useResult
   $Res call(
       {String id,
-      String email,
-      UserRole role,
+      String userId,
+      String role,
       String displayName,
       String? avatarUrl,
       String? bio,
-      String? location,
       List<String> skills,
-      int? experienceYears,
       int? expectedSalary,
       String? companyName,
       String? companySize,
-      DateTime createdAt,
-      DateTime updatedAt});
+      bool isOpenToOpportunity,
+      bool isOpenToExchange});
 }
 
 /// @nodoc
-class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
-    implements $UserModelCopyWith<$Res> {
-  _$UserModelCopyWithImpl(this._value, this._then);
+class _$UserCardModelCopyWithImpl<$Res, $Val extends UserCardModel>
+    implements $UserCardModelCopyWith<$Res> {
+  _$UserCardModelCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -77,33 +75,31 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
   @override
   $Res call({
     Object? id = null,
-    Object? email = null,
+    Object? userId = null,
     Object? role = null,
     Object? displayName = null,
     Object? avatarUrl = freezed,
     Object? bio = freezed,
-    Object? location = freezed,
     Object? skills = null,
-    Object? experienceYears = freezed,
     Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? isOpenToOpportunity = null,
+    Object? isOpenToExchange = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
               as String,
       role: null == role
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
-              as UserRole,
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -116,18 +112,10 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.bio
           : bio // ignore: cast_nullable_to_non_nullable
               as String?,
-      location: freezed == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as String?,
       skills: null == skills
           ? _value.skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      experienceYears: freezed == experienceYears
-          ? _value.experienceYears
-          : experienceYears // ignore: cast_nullable_to_non_nullable
-              as int?,
       expectedSalary: freezed == expectedSalary
           ? _value.expectedSalary
           : expectedSalary // ignore: cast_nullable_to_non_nullable
@@ -140,82 +128,78 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.companySize
           : companySize // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+      isOpenToOpportunity: null == isOpenToOpportunity
+          ? _value.isOpenToOpportunity
+          : isOpenToOpportunity // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isOpenToExchange: null == isOpenToExchange
+          ? _value.isOpenToExchange
+          : isOpenToExchange // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
 
 /// @nodoc
-abstract class _$$UserModelImplCopyWith<$Res>
-    implements $UserModelCopyWith<$Res> {
-  factory _$$UserModelImplCopyWith(
-          _$UserModelImpl value, $Res Function(_$UserModelImpl) then) =
-      __$$UserModelImplCopyWithImpl<$Res>;
+abstract class _$$UserCardModelImplCopyWith<$Res>
+    implements $UserCardModelCopyWith<$Res> {
+  factory _$$UserCardModelImplCopyWith(
+          _$UserCardModelImpl value, $Res Function(_$UserCardModelImpl) then) =
+      __$$UserCardModelImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
       {String id,
-      String email,
-      UserRole role,
+      String userId,
+      String role,
       String displayName,
       String? avatarUrl,
       String? bio,
-      String? location,
       List<String> skills,
-      int? experienceYears,
       int? expectedSalary,
       String? companyName,
       String? companySize,
-      DateTime createdAt,
-      DateTime updatedAt});
+      bool isOpenToOpportunity,
+      bool isOpenToExchange});
 }
 
 /// @nodoc
-class __$$UserModelImplCopyWithImpl<$Res>
-    extends _$UserModelCopyWithImpl<$Res, _$UserModelImpl>
-    implements _$$UserModelImplCopyWith<$Res> {
-  __$$UserModelImplCopyWithImpl(
-      _$UserModelImpl _value, $Res Function(_$UserModelImpl) _then)
+class __$$UserCardModelImplCopyWithImpl<$Res>
+    extends _$UserCardModelCopyWithImpl<$Res, _$UserCardModelImpl>
+    implements _$$UserCardModelImplCopyWith<$Res> {
+  __$$UserCardModelImplCopyWithImpl(
+      _$UserCardModelImpl _value, $Res Function(_$UserCardModelImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? email = null,
+    Object? userId = null,
     Object? role = null,
     Object? displayName = null,
     Object? avatarUrl = freezed,
     Object? bio = freezed,
-    Object? location = freezed,
     Object? skills = null,
-    Object? experienceYears = freezed,
     Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? isOpenToOpportunity = null,
+    Object? isOpenToExchange = null,
   }) {
-    return _then(_$UserModelImpl(
+    return _then(_$UserCardModelImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      email: null == email
-          ? _value.email
-          : email // ignore: cast_nullable_to_non_nullable
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
               as String,
       role: null == role
           ? _value.role
           : role // ignore: cast_nullable_to_non_nullable
-              as UserRole,
+              as String,
       displayName: null == displayName
           ? _value.displayName
           : displayName // ignore: cast_nullable_to_non_nullable
@@ -228,18 +212,10 @@ class __$$UserModelImplCopyWithImpl<$Res>
           ? _value.bio
           : bio // ignore: cast_nullable_to_non_nullable
               as String?,
-      location: freezed == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as String?,
       skills: null == skills
           ? _value._skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      experienceYears: freezed == experienceYears
-          ? _value.experienceYears
-          : experienceYears // ignore: cast_nullable_to_non_nullable
-              as int?,
       expectedSalary: freezed == expectedSalary
           ? _value.expectedSalary
           : expectedSalary // ignore: cast_nullable_to_non_nullable
@@ -252,57 +228,54 @@ class __$$UserModelImplCopyWithImpl<$Res>
           ? _value.companySize
           : companySize // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updatedAt: null == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+      isOpenToOpportunity: null == isOpenToOpportunity
+          ? _value.isOpenToOpportunity
+          : isOpenToOpportunity // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isOpenToExchange: null == isOpenToExchange
+          ? _value.isOpenToExchange
+          : isOpenToExchange // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$UserModelImpl extends _UserModel {
-  const _$UserModelImpl(
+class _$UserCardModelImpl implements _UserCardModel {
+  const _$UserCardModelImpl(
       {required this.id,
-      required this.email,
+      required this.userId,
       required this.role,
       required this.displayName,
       this.avatarUrl,
       this.bio,
-      this.location,
       final List<String> skills = const [],
-      this.experienceYears,
       this.expectedSalary,
       this.companyName,
       this.companySize,
-      required this.createdAt,
-      required this.updatedAt})
-      : _skills = skills,
-        super._();
+      this.isOpenToOpportunity = true,
+      this.isOpenToExchange = true})
+      : _skills = skills;
 
-  factory _$UserModelImpl.fromJson(Map<String, dynamic> json) =>
-      _$$UserModelImplFromJson(json);
+  factory _$UserCardModelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UserCardModelImplFromJson(json);
 
   @override
   final String id;
+// user_profiles.id
   @override
-  final String email;
+  final String userId;
+// users.id
   @override
-  final UserRole role;
-// ← 這就是當前身份，直接更新它
+  final String role;
+// 'job_seeker' | 'employer' | 'peer'
   @override
   final String displayName;
   @override
   final String? avatarUrl;
   @override
   final String? bio;
-  @override
-  final String? location;
   final List<String> _skills;
   @override
   @JsonKey()
@@ -313,51 +286,47 @@ class _$UserModelImpl extends _UserModel {
   }
 
   @override
-  final int? experienceYears;
-  @override
   final int? expectedSalary;
   @override
   final String? companyName;
   @override
   final String? companySize;
   @override
-  final DateTime createdAt;
+  @JsonKey()
+  final bool isOpenToOpportunity;
   @override
-  final DateTime updatedAt;
+  @JsonKey()
+  final bool isOpenToExchange;
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, location: $location, skills: $skills, experienceYears: $experienceYears, expectedSalary: $expectedSalary, companyName: $companyName, companySize: $companySize, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserCardModel(id: $id, userId: $userId, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, skills: $skills, expectedSalary: $expectedSalary, companyName: $companyName, companySize: $companySize, isOpenToOpportunity: $isOpenToOpportunity, isOpenToExchange: $isOpenToExchange)';
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$UserModelImpl &&
+            other is _$UserCardModelImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.email, email) || other.email == email) &&
+            (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.role, role) || other.role == role) &&
             (identical(other.displayName, displayName) ||
                 other.displayName == displayName) &&
             (identical(other.avatarUrl, avatarUrl) ||
                 other.avatarUrl == avatarUrl) &&
             (identical(other.bio, bio) || other.bio == bio) &&
-            (identical(other.location, location) ||
-                other.location == location) &&
             const DeepCollectionEquality().equals(other._skills, _skills) &&
-            (identical(other.experienceYears, experienceYears) ||
-                other.experienceYears == experienceYears) &&
             (identical(other.expectedSalary, expectedSalary) ||
                 other.expectedSalary == expectedSalary) &&
             (identical(other.companyName, companyName) ||
                 other.companyName == companyName) &&
             (identical(other.companySize, companySize) ||
                 other.companySize == companySize) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.isOpenToOpportunity, isOpenToOpportunity) ||
+                other.isOpenToOpportunity == isOpenToOpportunity) &&
+            (identical(other.isOpenToExchange, isOpenToExchange) ||
+                other.isOpenToExchange == isOpenToExchange));
   }
 
   @JsonKey(ignore: true)
@@ -365,73 +334,64 @@ class _$UserModelImpl extends _UserModel {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      email,
+      userId,
       role,
       displayName,
       avatarUrl,
       bio,
-      location,
       const DeepCollectionEquality().hash(_skills),
-      experienceYears,
       expectedSalary,
       companyName,
       companySize,
-      createdAt,
-      updatedAt);
+      isOpenToOpportunity,
+      isOpenToExchange);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$UserModelImplCopyWith<_$UserModelImpl> get copyWith =>
-      __$$UserModelImplCopyWithImpl<_$UserModelImpl>(this, _$identity);
+  _$$UserCardModelImplCopyWith<_$UserCardModelImpl> get copyWith =>
+      __$$UserCardModelImplCopyWithImpl<_$UserCardModelImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$UserModelImplToJson(
+    return _$$UserCardModelImplToJson(
       this,
     );
   }
 }
 
-abstract class _UserModel extends UserModel {
-  const factory _UserModel(
+abstract class _UserCardModel implements UserCardModel {
+  const factory _UserCardModel(
       {required final String id,
-      required final String email,
-      required final UserRole role,
+      required final String userId,
+      required final String role,
       required final String displayName,
       final String? avatarUrl,
       final String? bio,
-      final String? location,
       final List<String> skills,
-      final int? experienceYears,
       final int? expectedSalary,
       final String? companyName,
       final String? companySize,
-      required final DateTime createdAt,
-      required final DateTime updatedAt}) = _$UserModelImpl;
-  const _UserModel._() : super._();
+      final bool isOpenToOpportunity,
+      final bool isOpenToExchange}) = _$UserCardModelImpl;
 
-  factory _UserModel.fromJson(Map<String, dynamic> json) =
-      _$UserModelImpl.fromJson;
+  factory _UserCardModel.fromJson(Map<String, dynamic> json) =
+      _$UserCardModelImpl.fromJson;
 
   @override
   String get id;
-  @override
-  String get email;
-  @override
-  UserRole get role;
-  @override // ← 這就是當前身份，直接更新它
+  @override // user_profiles.id
+  String get userId;
+  @override // users.id
+  String get role;
+  @override // 'job_seeker' | 'employer' | 'peer'
   String get displayName;
   @override
   String? get avatarUrl;
   @override
   String? get bio;
   @override
-  String? get location;
-  @override
   List<String> get skills;
-  @override
-  int? get experienceYears;
   @override
   int? get expectedSalary;
   @override
@@ -439,11 +399,11 @@ abstract class _UserModel extends UserModel {
   @override
   String? get companySize;
   @override
-  DateTime get createdAt;
+  bool get isOpenToOpportunity;
   @override
-  DateTime get updatedAt;
+  bool get isOpenToExchange;
   @override
   @JsonKey(ignore: true)
-  _$$UserModelImplCopyWith<_$UserModelImpl> get copyWith =>
+  _$$UserCardModelImplCopyWith<_$UserCardModelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

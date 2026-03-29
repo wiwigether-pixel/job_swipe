@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/models/user_model.dart';
 import '../providers/current_role_provider.dart';
-import '../providers/profile_provider.dart';
+
+import '../router/app_router.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key, required this.child});
@@ -43,14 +44,10 @@ class _MainShellState extends ConsumerState<MainShell>
 
   void _onTap(int index, BuildContext context) {
     switch (index) {
-      case 0:
-        context.go('/swipe');
-      case 1:
-        context.go('/messages');
-      case 2:
-        context.go('/matches');
-      case 3:
-        context.go('/profile');
+      case 0: context.go('/swipe');
+      case 1: context.go('/messages');
+      case 2: context.go('/matches');
+      case 3: context.go('/profile');
     }
   }
 
@@ -283,10 +280,18 @@ class _RolePickerSheet extends StatelessWidget {
                   onTap: () async {
                     Navigator.pop(context);
                     if (!isSelected) {
-                      await ref
+                      // switchRole 回傳 true 代表這個身份還沒填過 onboarding
+                      final needsOnboarding = await ref
                           .read(currentRoleProvider.notifier)
                           .switchRole(role);
-                      // 不 invalidate profileProvider，避免觸發 needsOnboarding
+
+                      if (needsOnboarding && context.mounted) {
+                        // 跳到該身份的 onboarding，傳入 role 字串
+                        context.push(
+                          AppRoutes.roleOnboarding,
+                          extra: role.toDbString,
+                        );
+                      }
                     }
                   },
                 );
@@ -362,8 +367,7 @@ class _RoleOption extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _description,
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 12),
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
                   ),
                 ],
               ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/job_model.dart';
 
-/// 職缺卡片 Widget
-/// 設計重點：資訊層次清晰，一眼看到最重要的內容
 class JobCard extends StatelessWidget {
   const JobCard({super.key, required this.job});
 
@@ -18,7 +16,7 @@ class JobCard extends StatelessWidget {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -28,17 +26,13 @@ class JobCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 頂部公司色塊（替代圖片，MVP 階段不需要上傳圖片）
           _CompanyHeader(job: job),
-
-          // ── 主要內容
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 職位名稱
                   Text(
                     job.title,
                     style: theme.textTheme.headlineSmall?.copyWith(
@@ -48,8 +42,6 @@ class JobCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-
-                  // 公司名稱
                   Text(
                     job.companyName ?? '未公開公司',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -57,8 +49,6 @@ class JobCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // 標籤列：地點、類型、薪資
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -82,8 +72,6 @@ class JobCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // 職缺描述
                   Text(
                     '職缺描述',
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -94,15 +82,13 @@ class JobCard extends StatelessWidget {
                   Text(
                     job.description,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       height: 1.5,
                     ),
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 16),
-
-                  // 技能標籤
                   if (job.requiredSkills.isNotEmpty) ...[
                     Text(
                       '需求技能',
@@ -115,7 +101,7 @@ class JobCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: job.requiredSkills
-                          .take(6) // 最多顯示 6 個技能
+                          .take(6)
                           .map((skill) => _SkillChip(skill: skill))
                           .toList(),
                     ),
@@ -142,7 +128,6 @@ class _CompanyHeader extends StatelessWidget {
   const _CompanyHeader({required this.job});
   final JobModel job;
 
-  /// 根據公司名稱生成固定的漸層色（同一公司永遠是同一個顏色）
   List<Color> _generateGradient(String seed) {
     final hash = seed.codeUnits.fold(0, (a, b) => a + b);
     final gradients = [
@@ -204,9 +189,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: effectiveColor.withOpacity(0.1),
+        color: effectiveColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: effectiveColor.withOpacity(0.3)),
+        border: Border.all(color: effectiveColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

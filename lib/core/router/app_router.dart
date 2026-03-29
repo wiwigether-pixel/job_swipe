@@ -20,7 +20,8 @@ abstract class AppRoutes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
-  static const onboarding = '/onboarding';
+  static const onboarding = '/onboarding';       // 初始 onboarding（註冊後）
+  static const roleOnboarding = '/role-onboarding'; // 切換身份後的 onboarding
   static const swipe = '/swipe';
   static const messages = '/messages';
   static const matches = '/matches';
@@ -45,11 +46,11 @@ GoRouter appRouter(AppRouterRef ref) {
     redirect: (context, state) {
       final location = state.uri.path;
 
+      // auth 還在載入，維持原位
+      if (authStateAsync.isLoading) return null;
+
       final isLoggedIn = authRepository.currentUser != null ||
           (authStateAsync.hasValue && authStateAsync.value != null);
-
-      // auth stream 還在載入，等待
-      if (authStateAsync.isLoading) return null;
 
       debugPrint('[Router] path=$location, loggedIn=$isLoggedIn');
 
@@ -62,14 +63,28 @@ GoRouter appRouter(AppRouterRef ref) {
         return isEntryPage ? null : AppRoutes.welcome;
       }
 
-      // profile stream 還沒有發出第一個值，等待
-      // hasValue=false 代表 stream 還沒回應，不是「沒有 profile」
+      // 已登入，等待 profile stream
+      // 注意：profileAsync.hasValue=true 但 value=null 有兩種情況：
+      // 1. stream 剛建立，推了初始 null（user 還在載入）→ 等待
+      // 2. DB 真的沒有這個 user 的資料 → 需要 onboarding
+      // 用 authStateAsync 是否有 user 來區分這兩種情況
       if (!profileAsync.hasValue) {
-        debugPrint('[Router] profile not yet loaded, waiting...');
-        return null;
+        return location == AppRoutes.splash ? null : AppRoutes.splash;
+      }
+
+      // profileAsync.value == null 但 auth 有 user
+      // → stream 可能剛切換還沒拿到值，等一下
+      if (profileAsync.value == null &&
+          authStateAsync.hasValue &&
+          authStateAsync.value != null) {
+        // 給一個緩衝：如果已經在 splash 就繼續等，否則去 splash
+        return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
 
       final profile = profileAsync.value;
+
+      // profile 為 null = DB 沒有這筆 → 需要 onboarding
+      // isProfileComplete = false → 還沒填過頭像或姓名 → 需要 onboarding
       final needsOnboarding = profile == null || !profile.isProfileComplete;
 
       debugPrint('[Router] displayName=${profile?.displayName}, '
@@ -77,7 +92,10 @@ GoRouter appRouter(AppRouterRef ref) {
           'needsOnboarding=$needsOnboarding');
 
       if (needsOnboarding) {
-        return location == AppRoutes.onboarding ? null : AppRoutes.onboarding;
+        // role-onboarding 是切換身份後的，不受此邏輯影響
+        if (location == AppRoutes.onboarding) return null;
+        if (location == AppRoutes.roleOnboarding) return null;
+        return AppRoutes.onboarding;
       }
 
       if (isEntryPage || location == AppRoutes.onboarding) {
@@ -90,7 +108,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: AppRoutes.splash,
         builder: (_, __) => const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+          backgroundColor: Colors.black,
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          ),
         ),
       ),
       GoRoute(
@@ -111,7 +132,21 @@ GoRouter appRouter(AppRouterRef ref) {
           final container = ProviderScope.containerOf(context);
           final profile = container.read(profileProvider).valueOrNull;
           final role = profile?.role.toDbString ?? 'job_seeker';
-          return OnboardingScreen(initialRole: role);
+          return OnboardingScreen(
+            initialRole: role,
+            isRoleSwitch: false,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.roleOnboarding,
+        builder: (context, state) {
+          // extra 傳入要填寫的 role
+          final role = state.extra as String? ?? 'job_seeker';
+          return OnboardingScreen(
+            initialRole: role,
+            isRoleSwitch: true, // 告訴 onboarding 這是切換身份，存到 user_profiles
+          );
         },
       ),
       ShellRoute(
@@ -139,7 +174,6 @@ GoRouter appRouter(AppRouterRef ref) {
   );
 }
 
-// WelcomeScreen 和 _RouterRefreshNotifier 不變，保留你原本的
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 

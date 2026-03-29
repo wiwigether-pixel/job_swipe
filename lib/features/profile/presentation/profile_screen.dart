@@ -6,6 +6,7 @@ import '../../../core/providers/current_role_provider.dart';
 import '../../../core/providers/profile_provider.dart';
 import '../../../core/router/main_shell.dart';
 import '../../../shared/models/user_model.dart';
+import 'employer_jobs_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -27,7 +28,9 @@ class ProfileScreen extends ConsumerWidget {
             color: themeColor,
             fontWeight: FontWeight.bold,
             fontSize: 22,
-            shadows: [Shadow(color: themeColor.withValues(alpha: 0.5), blurRadius: 8)],
+            shadows: [
+              Shadow(color: themeColor.withValues(alpha: 0.5), blurRadius: 8)
+            ],
           ),
         ),
         actions: [
@@ -38,16 +41,15 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       body: profileAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: themeColor)),
+        loading: () =>
+            Center(child: CircularProgressIndicator(color: themeColor)),
         error: (e, _) => Center(
-          child: Text(e.toString(), style: const TextStyle(color: Colors.white38)),
+          child:
+              Text(e.toString(), style: const TextStyle(color: Colors.white38)),
         ),
         data: (profile) => profile == null
             ? const SizedBox.shrink()
-            : _ProfileBody(
-                profile: profile,
-                themeColor: themeColor,
-              ),
+            : _ProfileBody(profile: profile, themeColor: themeColor),
       ),
     );
   }
@@ -60,117 +62,359 @@ class _ProfileBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentRole = ref.watch(currentRoleProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // ── 頭像 + 名字
-          _AvatarSection(profile: profile, themeColor: themeColor),
-          const SizedBox(height: 32),
+      child: Center(
+        child: ConstrainedBox(
+          // 限制最大寬度，讓寬螢幕也能居中
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            children: [
+              _AvatarSection(profile: profile, themeColor: themeColor),
+              const SizedBox(height: 32),
 
-          // ── 身份模式切換
-          _SectionTitle(label: '身份模式', themeColor: themeColor),
-          const SizedBox(height: 12),
-          ...AppRole.values.map((role) => _RoleRow(
-                role: role,
-                isActive: profile.effectiveRole == role,
+              _SectionTitle(label: '個人資訊', themeColor: themeColor),
+              const SizedBox(height: 12),
+              _InfoTile(
+                icon: Icons.person_outline,
+                label: '姓名',
+                value: profile.displayName,
                 themeColor: themeColor,
-                onTap: () =>
-                    ref.read(currentRoleProvider.notifier).switchRole(role),
-              )),
-          const SizedBox(height: 28),
+              ),
+              if (profile.bio != null && profile.bio!.isNotEmpty)
+                _InfoTile(
+                  icon: Icons.edit_outlined,
+                  label: '簡介',
+                  value: profile.bio!,
+                  themeColor: themeColor,
+                ),
+              if (profile.skills.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _SkillsSection(skills: profile.skills, themeColor: themeColor),
+              ],
+              const SizedBox(height: 28),
 
-          // ── 個人資訊
-          _SectionTitle(label: '個人資訊', themeColor: themeColor),
-          const SizedBox(height: 12),
-          _InfoTile(
-            icon: Icons.person_outline,
-            label: '姓名',
-            value: profile.displayName,
-            themeColor: themeColor,
-          ),
-          if (profile.bio != null && profile.bio!.isNotEmpty)
-            _InfoTile(
-              icon: Icons.edit_outlined,
-              label: '簡介',
-              value: profile.bio!,
-              themeColor: themeColor,
-            ),
-          if (profile.skills.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _SkillsSection(skills: profile.skills, themeColor: themeColor),
-          ],
-          const SizedBox(height: 28),
+              // 雇主專區：只在雇主身份時顯示
+              if (currentRole == AppRole.employer) ...[
+                _SectionTitle(label: '雇主專區', themeColor: themeColor),
+                const SizedBox(height: 12),
+                _ActionTile(
+                  icon: Icons.work_outline,
+                  label: '職缺管理',
+                  themeColor: themeColor,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EmployerJobsScreen(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+              ],
 
-          // ── 操作按鈕
-          _SectionTitle(label: '帳號', themeColor: themeColor),
-          const SizedBox(height: 12),
-          _ActionTile(
-            icon: Icons.edit,
-            label: '編輯個人資料',
-            themeColor: themeColor,
-            onTap: () {
-              // TODO: 導向編輯頁（Phase 後期）
-            },
+              _SectionTitle(label: '帳號', themeColor: themeColor),
+              const SizedBox(height: 12),
+              _ActionTile(
+                icon: Icons.edit,
+                label: '編輯個人資料',
+                themeColor: themeColor,
+                onTap: () => _showEditSheet(context, ref, profile),
+              ),
+              _ActionTile(
+                icon: Icons.logout,
+                label: '登出',
+                themeColor: const Color(0xFFFF4757),
+                onTap: () => _confirmSignOut(context, ref),
+              ),
+              const SizedBox(height: 40),
+            ],
           ),
-          _ActionTile(
-            icon: Icons.logout,
-            label: '登出',
-            themeColor: const Color(0xFFFF4757),
-            onTap: () => _confirmSignOut(context, ref),
-          ),
-          const SizedBox(height: 40),
-        ],
+        ),
       ),
     );
   }
 
-  void _confirmSignOut(BuildContext context, WidgetRef ref) {
-      showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog( // 使用獨立的 dialogContext
-          backgroundColor: const Color(0xFF111111),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Colors.white12),
-          ),
-          title: const Text('確定要登出？',
-              style: TextStyle(color: Colors.white)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext), // 安全關閉對話框
-              child: const Text('取消', style: TextStyle(color: Colors.white38)),
-            ),
-            TextButton(
-              onPressed: () async {
-                // 1. 先關閉對話框
-                Navigator.pop(dialogContext);
+  // ── 編輯個人資料 bottom sheet
+  void _showEditSheet(BuildContext context, WidgetRef ref, UserModel profile) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditProfileSheet(profile: profile, themeColor: themeColor),
+    );
+  }
 
-                try {
-                  // 2. 重置 Provider 狀態
-                  ref.read(currentRoleProvider.notifier).reset();
-                  
-                  // 3. 執行登出 (加上 try-catch 防止資料庫欄位錯誤卡死流程)
-                  await Supabase.instance.client.auth.signOut();
-                } catch (e) {
-                  debugPrint('登出過程中發生錯誤 (可能是資料庫欄位問題): $e');
-                } finally {
-                  // 4. 無論 API 成功或失敗，只要 context 還在，就強制跳轉回歡迎頁
-                  if (context.mounted) {
-                    // 使用 go 會重置路由棧，最安全
-                    context.go('/welcome'); 
-                  }
-                }
-              },
-              child: const Text('登出',
-                  style: TextStyle(color: Color(0xFFFF4757))),
-            ),
-          ],
+  void _confirmSignOut(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
         ),
+        title: const Text('確定要登出？',
+            style: TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child:
+                const Text('取消', style: TextStyle(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                ref.read(currentRoleProvider.notifier).reset();
+                await Supabase.instance.client.auth.signOut();
+              } catch (e) {
+                debugPrint('登出錯誤: $e');
+              } finally {
+                if (context.mounted) context.go('/welcome');
+              }
+            },
+            child: const Text('登出',
+                style: TextStyle(color: Color(0xFFFF4757))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 編輯個人資料 Sheet
+class _EditProfileSheet extends ConsumerStatefulWidget {
+  const _EditProfileSheet({required this.profile, required this.themeColor});
+  final UserModel profile;
+  final Color themeColor;
+
+  @override
+  ConsumerState<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _bioController;
+  late final TextEditingController _skillController;
+  late List<String> _skills;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.profile.displayName);
+    _bioController = TextEditingController(text: widget.profile.bio ?? '');
+    _skillController = TextEditingController();
+    _skills = List<String>.from(widget.profile.skills);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _skillController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('姓名不能為空')),
       );
+      return;
     }
 
+    setState(() => _isSaving = true);
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception('未登入');
+
+      await Supabase.instance.client.from('users').update({
+        'display_name': _nameController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'skills': _skills,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', user.id);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ 個人資料已更新'),
+            backgroundColor: widget.themeColor.withValues(alpha: 0.8),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('儲存失敗：$e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.themeColor;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111111),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '編輯個人資料',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 姓名
+              _buildField(_nameController, '姓名', Icons.person, color),
+              const SizedBox(height: 16),
+
+              // 簡介
+              _buildField(_bioController, '個人簡介', Icons.edit, color,
+                  maxLines: 3),
+              const SizedBox(height: 16),
+
+              // 技能
+              TextField(
+                controller: _skillController,
+                style: const TextStyle(color: Colors.white),
+                onSubmitted: (val) {
+                  final trimmed = val.trim();
+                  if (trimmed.isNotEmpty) {
+                    setState(() {
+                      _skills.add(trimmed);
+                      _skillController.clear();
+                    });
+                  }
+                },
+                decoration: _inputDeco('輸入技能按 Enter', Icons.bolt, color),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _skills
+                    .map((s) => Chip(
+                          label: Text(s,
+                              style: const TextStyle(color: Colors.white)),
+                          backgroundColor: color.withValues(alpha: 0.15),
+                          deleteIconColor: color,
+                          onDeleted: () =>
+                              setState(() => _skills.remove(s)),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 24),
+
+              // 儲存按鈕
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black),
+                        )
+                      : const Text(
+                          '儲存',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+    Color color, {
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: const TextStyle(color: Colors.white),
+      decoration: _inputDeco(label, icon, color),
+    );
+  }
+
+  InputDecoration _inputDeco(String label, IconData icon, Color color) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white54),
+      prefixIcon: Icon(icon, color: color, size: 20),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.05),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white12),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: color),
+      ),
+    );
+  }
 }
+
+// ── 以下 Widget 不變，只修 withOpacity → withValues ──
 
 class _AvatarSection extends StatelessWidget {
   const _AvatarSection({required this.profile, required this.themeColor});
@@ -188,7 +432,8 @@ class _AvatarSection extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: themeColor, width: 2),
             boxShadow: [
-              BoxShadow(color: themeColor.withValues(alpha: 0.3), blurRadius: 16)
+              BoxShadow(
+                  color: themeColor.withValues(alpha: 0.3), blurRadius: 16)
             ],
           ),
           child: ClipOval(
@@ -244,69 +489,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _RoleRow extends StatelessWidget {
-  const _RoleRow({
-    required this.role,
-    required this.isActive,
-    required this.themeColor,
-    required this.onTap,
-  });
-  final AppRole role;
-  final bool isActive;
-  final Color themeColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = role.themeColor;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: isActive ? color.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.04),
-          border: Border.all(
-            color: isActive ? color : Colors.white10,
-            width: isActive ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(role.icon, color: color, size: 20),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                role.label,
-                style: TextStyle(
-                  color: isActive ? color : Colors.white54,
-                  fontWeight:
-                      isActive ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-            if (isActive)
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 6)
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _InfoTile extends StatelessWidget {
   const _InfoTile({
     required this.icon,
@@ -333,16 +515,19 @@ class _InfoTile extends StatelessWidget {
         children: [
           Icon(icon, color: themeColor, size: 18),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style:
-                      const TextStyle(color: Colors.white38, fontSize: 11)),
-              const SizedBox(height: 2),
-              Text(value,
-                  style: const TextStyle(color: Colors.white, fontSize: 14)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        color: Colors.white38, fontSize: 11)),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 14)),
+              ],
+            ),
           ),
         ],
       ),
@@ -373,7 +558,8 @@ class _SkillsSection extends StatelessWidget {
               Icon(Icons.bolt, color: themeColor, size: 18),
               const SizedBox(width: 8),
               const Text('技能',
-                  style: TextStyle(color: Colors.white38, fontSize: 11)),
+                  style:
+                      TextStyle(color: Colors.white38, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 10),
@@ -387,8 +573,8 @@ class _SkillsSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: themeColor.withValues(alpha: 0.12),
-                        border:
-                            Border.all(color: themeColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: themeColor.withValues(alpha: 0.3)),
                       ),
                       child: Text(s,
                           style: TextStyle(
@@ -422,7 +608,8 @@ class _ActionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: themeColor.withValues(alpha: 0.06),
@@ -441,7 +628,8 @@ class _ActionTile extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            Icon(Icons.chevron_right, color: themeColor.withValues(alpha: 0.5), size: 18),
+            Icon(Icons.chevron_right,
+                color: themeColor.withValues(alpha: 0.5), size: 18),
           ],
         ),
       ),

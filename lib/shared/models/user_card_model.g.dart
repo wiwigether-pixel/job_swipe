@@ -1,52 +1,42 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_model.dart';
+part of 'user_card_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
-    _$UserModelImpl(
+_$UserCardModelImpl _$$UserCardModelImplFromJson(Map<String, dynamic> json) =>
+    _$UserCardModelImpl(
       id: json['id'] as String,
-      email: json['email'] as String,
-      role: $enumDecode(_$UserRoleEnumMap, json['role']),
+      userId: json['userId'] as String,
+      role: json['role'] as String,
       displayName: json['displayName'] as String,
       avatarUrl: json['avatarUrl'] as String?,
       bio: json['bio'] as String?,
-      location: json['location'] as String?,
       skills: (json['skills'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      experienceYears: (json['experienceYears'] as num?)?.toInt(),
       expectedSalary: (json['expectedSalary'] as num?)?.toInt(),
       companyName: json['companyName'] as String?,
       companySize: json['companySize'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isOpenToOpportunity: json['isOpenToOpportunity'] as bool? ?? true,
+      isOpenToExchange: json['isOpenToExchange'] as bool? ?? true,
     );
 
-Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
+Map<String, dynamic> _$$UserCardModelImplToJson(_$UserCardModelImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'email': instance.email,
-      'role': _$UserRoleEnumMap[instance.role]!,
+      'userId': instance.userId,
+      'role': instance.role,
       'displayName': instance.displayName,
       'avatarUrl': instance.avatarUrl,
       'bio': instance.bio,
-      'location': instance.location,
       'skills': instance.skills,
-      'experienceYears': instance.experienceYears,
       'expectedSalary': instance.expectedSalary,
       'companyName': instance.companyName,
       'companySize': instance.companySize,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
+      'isOpenToOpportunity': instance.isOpenToOpportunity,
+      'isOpenToExchange': instance.isOpenToExchange,
     };
-
-const _$UserRoleEnumMap = {
-  UserRole.jobSeeker: 'jobSeeker',
-  UserRole.employer: 'employer',
-  UserRole.peer: 'peer',
-};

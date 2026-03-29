@@ -1,6 +1,6 @@
+// lib/features/swipe/presentation/swipe_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/models/job_model.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/swipe_card_wrapper.dart';
 import '../../match/presentation/match_dialog.dart';
@@ -25,14 +25,14 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
     _swipeController = SwipeController();
   }
 
-  Future<void> _handleSwipe(JobModel job, bool isLike) async {
+  Future<void> _handleSwipe(SwipeCard card, bool isLike) async {
     try {
       final isMatch = await ref
           .read(recommendedJobsProvider.notifier)
-          .onSwipe(jobId: job.id, isLike: isLike);
+          .onSwipe(card: card, isLike: isLike);
 
-      if (isMatch && isLike && mounted) {
-        await showMatchDialog(context, job: job);
+      if (isMatch && isLike && mounted && card.isJob) {
+        await showMatchDialog(context, job: card.job!);
       }
     } catch (e) {
       if (mounted) {
@@ -48,7 +48,7 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final jobsAsync = ref.watch(recommendedJobsProvider);
+    final cardsAsync = ref.watch(recommendedJobsProvider);
     final currentRole = ref.watch(currentRoleProvider);
     final themeColor = currentRole.themeColor;
 
@@ -77,76 +77,62 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
         duration: const Duration(milliseconds: 400),
         child: KeyedSubtree(
           key: ValueKey(currentRole),
-          child: jobsAsync.when(
-          loading: () => Center(
-            child: CircularProgressIndicator(color: themeColor),
-          ),
-          error: (error, stack) => _ErrorView(
-            message: error.toString(),
-            themeColor: themeColor,
-            onRetry: () => ref.invalidate(recommendedJobsProvider),
-          ),
-          data: (jobs) {
-            if (jobs.isEmpty) {
-              return _EmptyView(
-                themeColor: themeColor,
-                currentRole: currentRole,
-                onRefresh: () =>
-                    ref.read(recommendedJobsProvider.notifier).refresh(),
-              );
-            }
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '還有 ${jobs.length} 個${_cardLabel(currentRole)}',
-                        style: TextStyle(
-                          color: themeColor.withValues(alpha: 0.7),
-                          fontSize: 13,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            ref.read(recommendedJobsProvider.notifier).refresh(),
-                        child: Text(
-                          '重新整理',
-                          style: TextStyle(color: themeColor, fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SwipeCardStack(
-                    jobs: jobs,
-                    controller: _swipeController,
-                    onSwipe: _handleSwipe,
-                    onEmpty: () {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text('所有${_cardLabel(currentRole)}都看過了！'),
-                            backgroundColor: themeColor.withValues(alpha: 0.8),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                _ActionButtons(
-                  controller: _swipeController,
+          child: cardsAsync.when(
+            loading: () => Center(child: CircularProgressIndicator(color: themeColor)),
+            error: (error, stack) => _ErrorView(
+              message: error.toString(),
+              themeColor: themeColor,
+              onRetry: () => ref.invalidate(recommendedJobsProvider),
+            ),
+            data: (cards) {
+              if (cards.isEmpty) {
+                return _EmptyView(
                   themeColor: themeColor,
-                ),
-                const SizedBox(height: 16),
-              ],
-            );
-          },
-        ),
+                  currentRole: currentRole,
+                  onRefresh: () => ref.read(recommendedJobsProvider.notifier).refresh(),
+                );
+              }
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '還有 ${cards.length} 個${_cardLabel(currentRole)}',
+                          style: TextStyle(color: themeColor.withValues(alpha: 0.7), fontSize: 13),
+                        ),
+                        TextButton(
+                          onPressed: () => ref.read(recommendedJobsProvider.notifier).refresh(),
+                          child: Text('重新整理', style: TextStyle(color: themeColor, fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SwipeCardStack(
+                      cards: cards,
+                      controller: _swipeController,
+                      onSwipe: _handleSwipe,
+                      onEmpty: () {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('所有${_cardLabel(currentRole)}都看過了！'),
+                              backgroundColor: themeColor.withValues(alpha: 0.8),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  _ActionButtons(controller: _swipeController, themeColor: themeColor),
+                  const SizedBox(height: 16),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -171,27 +157,9 @@ class _ActionButtons extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _CircleButton(
-            icon: Icons.close,
-            color: const Color(0xFFFF4757),
-            size: 64,
-            iconSize: 32,
-            onPressed: () => controller.swipeLeft(),
-          ),
-          _CircleButton(
-            icon: Icons.star,
-            color: const Color(0xFF3498DB),
-            size: 48,
-            iconSize: 24,
-            onPressed: () {},
-          ),
-          _CircleButton(
-            icon: Icons.favorite,
-            color: themeColor,
-            size: 64,
-            iconSize: 32,
-            onPressed: () => controller.swipeRight(),
-          ),
+          _CircleButton(icon: Icons.close, color: const Color(0xFFFF4757), size: 64, iconSize: 32, onPressed: () => controller.swipeLeft()),
+          _CircleButton(icon: Icons.star, color: const Color(0xFF3498DB), size: 48, iconSize: 24, onPressed: () {}),
+          _CircleButton(icon: Icons.favorite, color: themeColor, size: 64, iconSize: 32, onPressed: () => controller.swipeRight()),
         ],
       ),
     );
@@ -199,13 +167,7 @@ class _ActionButtons extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.color,
-    required this.size,
-    required this.iconSize,
-    required this.onPressed,
-  });
+  const _CircleButton({required this.icon, required this.color, required this.size, required this.iconSize, required this.onPressed});
   final IconData icon;
   final Color color;
   final double size;
@@ -223,13 +185,7 @@ class _CircleButton extends StatelessWidget {
           shape: BoxShape.circle,
           color: const Color(0xFF111111),
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: Icon(icon, color: color, size: iconSize),
       ),
@@ -238,11 +194,7 @@ class _CircleButton extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({
-    required this.themeColor,
-    required this.currentRole,
-    required this.onRefresh,
-  });
+  const _EmptyView({required this.themeColor, required this.currentRole, required this.onRefresh});
   final Color themeColor;
   final AppRole currentRole;
   final VoidCallback onRefresh;
@@ -255,21 +207,10 @@ class _EmptyView extends StatelessWidget {
         children: [
           Icon(Icons.search_off, size: 80, color: themeColor.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
-          const Text(
-            '今天的都看完了',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          const Text('今天的都看完了', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 8),
           Text(
-            '明天再來看看新的${switch (currentRole) {
-              AppRole.jobSeeker => '職缺',
-              AppRole.employer => '人才',
-              AppRole.peer => '同業',
-            }}吧！',
+            '明天再來看看新的${switch (currentRole) { AppRole.jobSeeker => '職缺', AppRole.employer => '人才', AppRole.peer => '同業' }}吧！',
             style: const TextStyle(color: Colors.white38),
           ),
           const SizedBox(height: 24),
@@ -281,9 +222,7 @@ class _EmptyView extends StatelessWidget {
               backgroundColor: themeColor.withValues(alpha: 0.15),
               foregroundColor: themeColor,
               side: BorderSide(color: themeColor.withValues(alpha: 0.5)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -293,11 +232,7 @@ class _EmptyView extends StatelessWidget {
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({
-    required this.message,
-    required this.themeColor,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.themeColor, required this.onRetry});
   final String message;
   final Color themeColor;
   final VoidCallback onRetry;
@@ -310,23 +245,11 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline,
-                size: 64, color: Color(0xFFFF4757)),
+            const Icon(Icons.error_outline, size: 64, color: Color(0xFFFF4757)),
             const SizedBox(height: 16),
-            const Text(
-              '載入失敗',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            const Text('載入失敗', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white38),
-            ),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white38)),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: onRetry,
