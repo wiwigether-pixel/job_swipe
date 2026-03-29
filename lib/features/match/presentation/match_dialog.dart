@@ -58,7 +58,7 @@ class _MatchDialogContent extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _Avatar(label: 'ME'),
+                    const _Avatar(label: 'ME'),
                     const SizedBox(width: 8),
                     const Icon(Icons.favorite, color: Colors.white, size: 32),
                     const SizedBox(width: 8),

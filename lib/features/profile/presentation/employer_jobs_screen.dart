@@ -595,7 +595,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
 
               // 工作類型
               DropdownButtonFormField<String>(
-                value: _jobType,
+                initialValue: _jobType,
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDeco('工作類型', Icons.category, color),

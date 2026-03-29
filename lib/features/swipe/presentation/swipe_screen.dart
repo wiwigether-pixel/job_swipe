@@ -66,8 +66,8 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
             shadows: [Shadow(color: themeColor.withValues(alpha: 0.5), blurRadius: 8)],
           ),
         ),
-        actions: [
-          const Padding(
+        actions: const [
+          Padding(
             padding: EdgeInsets.only(right: 12),
             child: Center(child: RoleToggle()),
           ),

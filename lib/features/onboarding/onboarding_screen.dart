@@ -437,7 +437,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       dropdownColor: const Color(0xFF1A1A1A),
       style: const TextStyle(color: Colors.white),
       decoration: _inputStyle(label, Icons.people),

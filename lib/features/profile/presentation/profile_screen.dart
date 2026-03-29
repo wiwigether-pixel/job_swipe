@@ -33,8 +33,8 @@ class ProfileScreen extends ConsumerWidget {
             ],
           ),
         ),
-        actions: [
-          const Padding(
+        actions: const [
+          Padding(
             padding: EdgeInsets.only(right: 12),
             child: Center(child: RoleToggle()),
           ),
