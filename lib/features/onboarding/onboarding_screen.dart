@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'provider/onboarding_provider.dart';
 import '../welcome/connection_painter.dart';
+import 'package:job_swipe/core/utils/logger.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   final String initialRole;
@@ -172,14 +173,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       data['expected_salary'] = _expectedSalary;
     }
 
-    debugPrint('[Onboarding] 寫入 user_profiles: role=$role, '
+    logger.e('[Onboarding] 寫入 user_profiles: role=$role, '
         'is_complete=true');
 
     await Supabase.instance.client
         .from('user_profiles')
         .upsert(data, onConflict: 'user_id,role');
 
-    debugPrint('[Onboarding] ✅ user_profiles 寫入成功');
+    logger.e('[Onboarding] ✅ user_profiles 寫入成功');
   }
 
   @override

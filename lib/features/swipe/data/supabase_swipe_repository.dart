@@ -14,7 +14,9 @@ class SwipeCard {
   const SwipeCard.job(this.job) : userCard = null;
   const SwipeCard.user(this.userCard) : job = null;
 
-  String get id => job?.id ?? userCard!.id;
+  // 用 userId（users.id）而不是 user_profiles.id
+  // 這樣 swipes 記錄的 target_id 才能正確對應
+  String get id => job?.id ?? userCard!.userId;
   bool get isJob => job != null;
 }
 
@@ -174,13 +176,24 @@ class SupabaseSwipeRepository {
       if (direction != 'right') return false;
 
       if (targetType == 'job') {
-        await SupabaseConfig.client.from('matches').upsert({
+        // 先查出這個職缺的 employer_id
+        final jobData = await SupabaseConfig.client
+            .from('jobs')
+            .select('employer_id')
+            .eq('id', targetId)
+            .single();
+
+        final employerId = jobData['employer_id'] as String;
+
+        await SupabaseConfig.client.from('matches').insert({
           'job_seeker_id': swiperId,
           'job_id': targetId,
+          'employer_id': employerId,
           'status': 'pending',
         });
       } else {
-        await SupabaseConfig.client.from('matches').upsert({
+        // 雇主/同業右滑使用者
+        await SupabaseConfig.client.from('matches').insert({
           'initiator_id': swiperId,
           'target_user_id': targetId,
           'match_type': 'user',

@@ -12,6 +12,7 @@ import '../../features/match/presentation/matches_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../core/providers/profile_provider.dart';
 import '../../core/router/main_shell.dart';
+import 'package:job_swipe/core/utils/logger.dart';
 
 part 'app_router.g.dart';
 
@@ -20,8 +21,8 @@ abstract class AppRoutes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
-  static const onboarding = '/onboarding';       // 初始 onboarding（註冊後）
-  static const roleOnboarding = '/role-onboarding'; // 切換身份後的 onboarding
+  static const onboarding = '/onboarding';
+  static const roleOnboarding = '/role-onboarding';
   static const swipe = '/swipe';
   static const messages = '/messages';
   static const matches = '/matches';
@@ -37,71 +38,65 @@ GoRouter appRouter(AppRouterRef ref) {
   final notifier = _RouterRefreshNotifier();
   ref.onDispose(notifier.dispose);
 
+  // 監聽狀態變化，觸發 Router 重新導向
   ref.listen(authStateProvider, (_, __) => notifier.notify());
   ref.listen(profileProvider, (_, __) => notifier.notify());
 
   return GoRouter(
-    initialLocation: AppRoutes.welcome,
+    // 將初始路徑設為 Splash，讓 App 啟動時有緩衝空間判斷登入狀態
+    initialLocation: AppRoutes.splash,
     refreshListenable: notifier,
     redirect: (context, state) {
       final location = state.uri.path;
 
-      // auth 還在載入，維持原位
+      // 1. Auth 載入中，留在原處（或 Splash）
       if (authStateAsync.isLoading) return null;
 
-      final isLoggedIn = authRepository.currentUser != null ||
-          (authStateAsync.hasValue && authStateAsync.value != null);
+      final user = authRepository.currentUser;
+      final isLoggedIn = user != null;
 
-      debugPrint('[Router] path=$location, loggedIn=$isLoggedIn');
-
-      final isEntryPage = location == AppRoutes.welcome ||
-          location == AppRoutes.login ||
-          location == AppRoutes.register ||
-          location == AppRoutes.splash;
-
+      // 2. 未登入邏輯
       if (!isLoggedIn) {
+        final isEntryPage = location == AppRoutes.welcome ||
+            location == AppRoutes.login ||
+            location == AppRoutes.register;
+        // 如果不在入口頁，強制導向 welcome
         return isEntryPage ? null : AppRoutes.welcome;
       }
 
-      // 已登入，等待 profile stream
-      // 注意：profileAsync.hasValue=true 但 value=null 有兩種情況：
-      // 1. stream 剛建立，推了初始 null（user 還在載入）→ 等待
-      // 2. DB 真的沒有這個 user 的資料 → 需要 onboarding
-      // 用 authStateAsync 是否有 user 來區分這兩種情況
-      if (!profileAsync.hasValue) {
-        return location == AppRoutes.splash ? null : AppRoutes.splash;
-      }
+      // 3. 已登入，但 Profile 還在讀取或 Stream 尚未建立
+      if (profileAsync.isLoading) return AppRoutes.splash;
 
-      // profileAsync.value == null 但 auth 有 user
-      // → stream 可能剛切換還沒拿到值，等一下
-      if (profileAsync.value == null &&
-          authStateAsync.hasValue &&
-          authStateAsync.value != null) {
-        // 給一個緩衝：如果已經在 splash 就繼續等，否則去 splash
-        return location == AppRoutes.splash ? null : AppRoutes.splash;
-      }
-
-      final profile = profileAsync.value;
-
-      // profile 為 null = DB 沒有這筆 → 需要 onboarding
-      // isProfileComplete = false → 還沒填過頭像或姓名 → 需要 onboarding
+      final profile = profileAsync.valueOrNull;
+      
+      // 判定是否需要進行 Onboarding (資料夾沒資料或不完整)
       final needsOnboarding = profile == null || !profile.isProfileComplete;
 
-      debugPrint('[Router] displayName=${profile?.displayName}, '
-          'isProfileComplete=${profile?.isProfileComplete}, '
-          'needsOnboarding=$needsOnboarding');
+      // 使用我們新建立的 logger，發布後會自動靜音
+      logger.i('[Router] path=$location, user=${user.email}, needsOnboarding=$needsOnboarding');
 
+      // 4. 需要 Onboarding 的邏輯
       if (needsOnboarding) {
-        // role-onboarding 是切換身份後的，不受此邏輯影響
-        if (location == AppRoutes.onboarding) return null;
-        if (location == AppRoutes.roleOnboarding) return null;
+        // 如果已經在 onboarding 相關頁面，不動作
+        if (location == AppRoutes.onboarding || location == AppRoutes.roleOnboarding) {
+          return null;
+        }
         return AppRoutes.onboarding;
       }
 
-      if (isEntryPage || location == AppRoutes.onboarding) {
+      // 5. 已登入且資料完整：如果還在入口或 Onboarding 頁面，就送去 Swipe 首頁
+      final isAtEntryOrOnboarding = 
+          location == AppRoutes.welcome || 
+          location == AppRoutes.login || 
+          location == AppRoutes.register || 
+          location == AppRoutes.splash ||
+          location == AppRoutes.onboarding;
+
+      if (isAtEntryOrOnboarding) {
         return AppRoutes.swipe;
       }
 
+      // 6. 其他情況（已經在主 App 內），不進行額外跳轉
       return null;
     },
     routes: [
@@ -141,14 +136,14 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: AppRoutes.roleOnboarding,
         builder: (context, state) {
-          // extra 傳入要填寫的 role
           final role = state.extra as String? ?? 'job_seeker';
           return OnboardingScreen(
             initialRole: role,
-            isRoleSwitch: true, // 告訴 onboarding 這是切換身份，存到 user_profiles
+            isRoleSwitch: true,
           );
         },
       ),
+      // 主 App 導覽列包裝
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
@@ -173,6 +168,15 @@ GoRouter appRouter(AppRouterRef ref) {
     ],
   );
 }
+
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier() {
+    notifyListeners();
+  }
+  void notify() => notifyListeners();
+}
+
+// WelcomeScreen 維持原樣...
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -282,12 +286,4 @@ class WelcomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _RouterRefreshNotifier extends ChangeNotifier {
-  _RouterRefreshNotifier() {
-    notifyListeners();
-  }
-
-  void notify() => notifyListeners();
 }

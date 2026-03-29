@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../shared/models/user_model.dart';
 import 'profile_provider.dart';
-
+import 'package:job_swipe/core/utils/logger.dart';
 part 'current_role_provider.g.dart';
 
 @Riverpod(keepAlive: true)
@@ -42,9 +42,9 @@ class CurrentRole extends _$CurrentRole {
           .update({'role': newRole.toDbString})
           .eq('id', user.id);
 
-      debugPrint('[CurrentRole] users.role 更新為 ${newRole.toDbString}');
+      logger.i('[CurrentRole] users.role 更新為 ${newRole.toDbString}');
     } catch (e) {
-      debugPrint('[CurrentRole] 更新 users.role 失敗: $e');
+      logger.i('[CurrentRole] 更新 users.role 失敗: $e');
       _manuallySet = false;
       state = ref.read(profileProvider).valueOrNull?.effectiveRole
           ?? AppRole.jobSeeker;
@@ -64,11 +64,11 @@ class CurrentRole extends _$CurrentRole {
           .maybeSingle();
 
       final isComplete = existing?['is_complete'] == true;
-      debugPrint('[CurrentRole] role=${newRole.toDbString}, '
+      logger.i('[CurrentRole] role=${newRole.toDbString}, '
           'profileComplete=$isComplete');
       return !isComplete;
     } catch (e) {
-      debugPrint('[CurrentRole] 檢查 user_profiles 失敗: $e');
+      logger.i('[CurrentRole] 檢查 user_profiles 失敗: $e');
       return false;
     }
   }

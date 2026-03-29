@@ -336,6 +336,9 @@ class _JobCard extends StatelessWidget {
               ),
             ),
 
+          // 配對求職者區塊
+          _JobApplicants(jobId: job['id'] as String, themeColor: themeColor),
+
           // 操作按鈕
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -360,6 +363,156 @@ class _JobCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _JobApplicants extends StatefulWidget {
+  const _JobApplicants({required this.jobId, required this.themeColor});
+  final String jobId;
+  final Color themeColor;
+
+  @override
+  State<_JobApplicants> createState() => _JobApplicantsState();
+}
+
+class _JobApplicantsState extends State<_JobApplicants> {
+  bool _expanded = false;
+  List<Map<String, dynamic>> _applicants = [];
+  bool _loading = false;
+  bool _loaded = false;
+
+  Future<void> _load() async {
+    if (_loaded) return;
+    setState(() => _loading = true);
+    try {
+      final data = await Supabase.instance.client
+          .from('matches')
+          .select('''
+            id,
+            job_seeker:users!matches_job_seeker_id_fkey (
+              id, display_name, avatar_url, skills
+            )
+          ''')
+          .eq('job_id', widget.jobId)
+          .eq('status', 'pending');
+
+      setState(() {
+        _applicants = List<Map<String, dynamic>>.from(data as List);
+        _loaded = true;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() => _expanded = !_expanded);
+            if (_expanded) _load();
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+            child: Row(
+              children: [
+                Icon(Icons.people_outline,
+                    size: 14, color: widget.themeColor),
+                const SizedBox(width: 6),
+                Text(
+                  _loaded
+                      ? '${_applicants.length} 位有興趣的求職者'
+                      : '查看有興趣的求職者',
+                  style: TextStyle(
+                      color: widget.themeColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                  color: widget.themeColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_expanded) ...[
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else if (_applicants.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Text('還沒有求職者對此職缺有興趣',
+                  style: TextStyle(color: Colors.white38, fontSize: 12)),
+            )
+          else
+            ..._applicants.map((match) {
+              final person =
+                  match['job_seeker'] as Map<String, dynamic>?;
+              final skills = (person?['skills'] as List<dynamic>?)
+                      ?.map((e) => e.toString())
+                      .toList() ??
+                  [];
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor:
+                          widget.themeColor.withValues(alpha: 0.15),
+                      backgroundImage: person?['avatar_url'] != null
+                          ? NetworkImage(person!['avatar_url'] as String)
+                          : null,
+                      child: person?['avatar_url'] == null
+                          ? Icon(Icons.person,
+                              color: widget.themeColor, size: 18)
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            person?['display_name'] as String? ?? '未知',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          if (skills.isNotEmpty)
+                            Text(
+                              skills.take(3).join(' · '),
+                              style: const TextStyle(
+                                  color: Colors.white38, fontSize: 11),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          const SizedBox(height: 8),
+        ],
+      ],
     );
   }
 }
@@ -595,7 +748,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
 
               // 工作類型
               DropdownButtonFormField<String>(
-                initialValue: _jobType,
+                value: _jobType,
                 dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDeco('工作類型', Icons.category, color),

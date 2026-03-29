@@ -8,6 +8,7 @@ import '../../../core/error/error_handler.dart';
 import '../../../core/network/supabase_client.dart';
 import '../../../shared/models/user_model.dart';
 import '../domain/auth_repository.dart';
+import 'package:job_swipe/core/utils/logger.dart';
 
 // SharedPreferences 的 key
 const _kPendingProfileKey = 'pending_profile';
@@ -25,7 +26,7 @@ class SupabaseAuthRepository implements AuthRepository {
     _authSubscription = SupabaseConfig.client.auth.onAuthStateChange.listen(
       (data) async {
         final session = data.session;
-        debugPrint('[AuthListener] event=${data.event}, hasSession=${session != null}');
+        logger.i('[AuthListener] event=${data.event}, hasSession=${session != null}');
 
         if (session == null) {
           _currentUser = null;
@@ -42,7 +43,7 @@ class SupabaseAuthRepository implements AuthRepository {
             _currentUser = user;
             _authStateController.add(user);
           } catch (e) {
-            debugPrint('[AuthListener] 抓取/建立 Profile 失敗: $e');
+            logger.i('[AuthListener] 抓取/建立 Profile 失敗: $e');
           }
         }
       },
@@ -87,7 +88,7 @@ class SupabaseAuthRepository implements AuthRepository {
     required UserRole role,
   }) async {
     try {
-      debugPrint('[Register] Step1: 開始 signUp...');
+      logger.i('[Register] Step1: 開始 signUp...');
 
       // 【方案 B】先把 displayName 和 role 存到本地
       // 等信箱驗證完登入後，再用這些資料建立 profile
@@ -96,7 +97,7 @@ class SupabaseAuthRepository implements AuthRepository {
         role: role,
         email: email,
       );
-      debugPrint('[Register] ✅ 暫存 profile 資料到本地');
+      logger.i('[Register] ✅ 暫存 profile 資料到本地');
 
       final response = await SupabaseConfig.client.auth.signUp(
         email: email,
@@ -104,8 +105,8 @@ class SupabaseAuthRepository implements AuthRepository {
       );
 
       final userId = response.user?.id;
-      debugPrint('[Register] userId=$userId');
-      debugPrint('[Register] session=${response.session != null ? "有" : "無"}');
+      logger.i('[Register] userId=$userId');
+      logger.i('[Register] session=${response.session != null ? "有" : "無"}');
 
       if (userId == null) {
         throw AppAuthException('無法建立帳號', 'AUTH_SIGNUP_FAILED');
@@ -114,7 +115,7 @@ class SupabaseAuthRepository implements AuthRepository {
       // Email Confirmation 開啟：沒有 session 是正常的
       // 告訴使用者去收信，不是錯誤
       if (response.session == null) {
-        debugPrint('[Register] ✅ 驗證信已寄出，等待使用者確認');
+        logger.i('[Register] ✅ 驗證信已寄出，等待使用者確認');
         // 回傳一個「待驗證」的假 UserModel，讓 UI 知道註冊成功
         // 真正的 profile 會在登入後的 _fetchOrCreateProfile 建立
         throw AppAuthException(
@@ -158,14 +159,14 @@ class SupabaseAuthRepository implements AuthRepository {
         .maybeSingle();
 
     if (existing != null) {
-      debugPrint('[Profile] ✅ 找到現有 profile');
+      logger.i('[Profile] ✅ 找到現有 profile');
       final user = UserModel.fromSupabase(existing);
       _currentUser = user;
       return user;
     }
 
     // 沒有 profile：嘗試用本地暫存資料建立
-    debugPrint('[Profile] 無現有 profile，嘗試從暫存建立...');
+    logger.i('[Profile] 無現有 profile，嘗試從暫存建立...');
     final pending = await _loadPendingProfile();
 
     if (pending == null) {
@@ -173,7 +174,7 @@ class SupabaseAuthRepository implements AuthRepository {
       throw AppAuthException('找不到個人資料，請重新註冊', 'USER_PROFILE_NOT_FOUND');
     }
 
-    debugPrint('[Profile] 暫存資料: $pending');
+    logger.i('[Profile] 暫存資料: $pending');
 
     // 建立 profile
     await SupabaseConfig.client.from('users').insert({
@@ -183,7 +184,7 @@ class SupabaseAuthRepository implements AuthRepository {
       'email': email ?? pending['email'] ?? '',
     });
 
-    debugPrint('[Profile] ✅ profile 建立成功');
+    logger.i('[Profile] ✅ profile 建立成功');
 
     // 清除暫存（只用一次）
     await _clearPendingProfile();

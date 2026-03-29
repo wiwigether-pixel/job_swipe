@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:job_swipe/core/utils/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../shared/models/user_model.dart';
@@ -15,10 +15,10 @@ Stream<UserModel?> profile(ProfileRef ref) {
   final authUserId = authAsync.valueOrNull?.id;
   final userId = sdkUser?.id ?? authUserId;
 
-  debugPrint('[Profile] stream build: userId=$userId');
+  logger.i('[Profile] stream build: userId=$userId');
 
   if (userId == null) {
-    debugPrint('[Profile] stream: no user, returning null stream');
+    logger.i('[Profile] stream: no user, returning null stream');
     return Stream.value(null);
   }
 
@@ -30,9 +30,9 @@ Stream<UserModel?> profile(ProfileRef ref) {
       // 不用 asyncMap，避免時序問題拿到寫入前的舊值
       .where((data) => data.isNotEmpty)
       .map((data) {
-        debugPrint('[Profile] stream raw: ${data.first}');
+        logger.i('[Profile] stream raw: ${data.first}');
         final model = UserModel.fromSupabase(data.first);
-        debugPrint('[Profile] parsed: displayName=${model.displayName}, '
+        logger.i('[Profile] parsed: displayName=${model.displayName}, '
             'avatarUrl=${model.avatarUrl}, '
             'isProfileComplete=${model.isProfileComplete}');
         return model;

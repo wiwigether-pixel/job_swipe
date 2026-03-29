@@ -1,4 +1,3 @@
-// lib/features/swipe/presentation/swipe_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/user_model.dart';
@@ -6,6 +5,7 @@ import '../../../shared/widgets/swipe_card_wrapper.dart';
 import '../../match/presentation/match_dialog.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
+
 import 'swipe_card_stack.dart';
 import 'swipe_provider.dart';
 
@@ -30,20 +30,22 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       final isMatch = await ref
           .read(recommendedJobsProvider.notifier)
           .onSwipe(card: card, isLike: isLike);
-
       if (isMatch && isLike && mounted && card.isJob) {
         await showMatchDialog(context, job: card.job!);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('操作失敗，請稍後再試'),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('操作失敗，請稍後再試'), backgroundColor: Colors.red),
         );
       }
     }
+  }
+
+  Future<void> _handleSuperLike() async {
+    // 用 controller 觸發動畫，讓 CardSwiper 正常走滑卡流程
+    // 不直接呼叫 onSwipe，避免狀態不一致 crash
+    _swipeController.swipeRight();
   }
 
   @override
@@ -66,8 +68,8 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
             shadows: [Shadow(color: themeColor.withValues(alpha: 0.5), blurRadius: 8)],
           ),
         ),
-        actions: const [
-          Padding(
+        actions: [
+          const Padding(
             padding: EdgeInsets.only(right: 12),
             child: Center(child: RoleToggle()),
           ),
@@ -127,7 +129,11 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
                       },
                     ),
                   ),
-                  _ActionButtons(controller: _swipeController, themeColor: themeColor),
+                  _ActionButtons(
+                    controller: _swipeController,
+                    themeColor: themeColor,
+                    onSuperLike: _handleSuperLike,
+                  ),
                   const SizedBox(height: 16),
                 ],
               );
@@ -146,9 +152,14 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
 }
 
 class _ActionButtons extends StatelessWidget {
-  const _ActionButtons({required this.controller, required this.themeColor});
+  const _ActionButtons({
+    required this.controller,
+    required this.themeColor,
+    required this.onSuperLike,
+  });
   final SwipeController controller;
   final Color themeColor;
+  final VoidCallback onSuperLike;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +169,7 @@ class _ActionButtons extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _CircleButton(icon: Icons.close, color: const Color(0xFFFF4757), size: 64, iconSize: 32, onPressed: () => controller.swipeLeft()),
-          _CircleButton(icon: Icons.star, color: const Color(0xFF3498DB), size: 48, iconSize: 24, onPressed: () {}),
+          _CircleButton(icon: Icons.star, color: const Color(0xFF3498DB), size: 48, iconSize: 24, onPressed: onSuperLike),
           _CircleButton(icon: Icons.favorite, color: themeColor, size: 64, iconSize: 32, onPressed: () => controller.swipeRight()),
         ],
       ),
@@ -167,7 +178,13 @@ class _ActionButtons extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.color, required this.size, required this.iconSize, required this.onPressed});
+  const _CircleButton({
+    required this.icon,
+    required this.color,
+    required this.size,
+    required this.iconSize,
+    required this.onPressed,
+  });
   final IconData icon;
   final Color color;
   final double size;
