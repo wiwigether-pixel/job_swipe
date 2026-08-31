@@ -36,6 +36,7 @@ Flutter (iOS / Android)
                              ├─ JobService        商業邏輯 @Transactional
                              ├─ QuotaService      原子扣額度
                              └─ Spring Data JPA ──> 同一個 Supabase Postgres
+                                （以 authenticated 角色連線，RLS 持續生效）
 ```
 
 ### 關鍵決定
@@ -44,8 +45,31 @@ Flutter (iOS / Android)
 （project_id `klwsmonobcenfoyhkyuq`）。零資料遷移；Flutter 舊路徑與 Java 新路徑可並存，
 允許逐功能搬遷與隨時回滾。
 
-**D2：Java 以 service role 連線，會繞過 RLS。** 這是本架構最大的安全風險點。
-授權責任完整移轉至 Java，每個 rpc 必須明確驗證資源擁有者。RLS 保留作為 Flutter 舊路徑的防線。
+**D2：Java 保留 RLS，不使用 service_role 繞過。**
+
+Supabase 的 `auth.uid()` 底層讀取 Postgres session 設定 `request.jwt.claims`
+（官方文件確認可直接設定）。因此 Java 端於每個交易開頭執行：
+
+```sql
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"<JWT 取出的 userId>","role":"authenticated"}';
+```
+
+之後所有 SQL 受到與 Flutter 走 Supabase SDK 時**完全相同的 RLS 保護**。
+這也是 Supabase 自身 PostgREST 採用的機制。
+
+由此形成雙層防禦：
+
+| 層 | 負責 |
+|---|---|
+| RLS（Postgres） | 這一列是不是你的 —— 漏寫檢查時兜底，回 0 列 |
+| Java Service | 這個操作合不合商業規則 —— 例如額度必須 > 0，RLS 無法表達 |
+
+Java 端仍會明確檢查資源擁有者，但那是第二層而非唯一防線。
+
+**⚠️ 必要條件：必須是 `SET LOCAL` 且包在交易內。** Spring 使用 HikariCP 連線池，
+若寫成 `SET`，身分會殘留於連線上，下一位使用者取得該連線時將沿用前一位的身分 ——
+這會造成比繞過 RLS 更嚴重的漏洞。此點須以測試釘死（見第 6 節）。
 
 **D3：額度邏輯由 SQL function 移至 Java。** 改為 `@Transactional` 服務，成為可單元測試的程式碼。
 
@@ -75,7 +99,11 @@ client 無法宣稱自己是誰。
 | `matches_screen.dart:70,80` | 接受／拒絕配對，僅 `.eq('id', matchId)` |
 | `supabase_swipe_repository.dart:137,169,187` | 更新配對為 accepted，僅 `.eq('id', ...)` |
 
-目前 RLS 有擋住，非 live 漏洞。但 Java 繞過 RLS 後（D2）將直接成為 IDOR。
+目前 RLS 有擋住，**非 live 漏洞** —— 這正是 RLS 的價值展現。
+補上擁有者條件是為了形成雙層防禦（見 D2），而非因為現況不安全。
+
+注意：S1 與 S2 皆非 RLS 的能力不足。S1 是 SECURITY DEFINER 函式開了 RLS 之外的後門，
+S2 在 RLS 下本來就是安全的。Supabase 的授權機制本身可靠，本設計因此選擇保留而非取代它。
 
 ### 架構問題
 
@@ -192,10 +220,15 @@ Supabase 支援 HS256 共用密鑰與非對稱金鑰（JWKS）兩種，本專案
 - `net.devh:grpc-spring-boot-starter`
 - `AuthInterceptor`：驗 Supabase JWT 簽章與有效期，取出 `sub` 作為 userId 存入 gRPC Context
 - 一支 `Ping` rpc 供端到端驗證
+- **RLS 連線機制**：實作交易層級的身分注入
+  （`SET LOCAL ROLE authenticated` + `SET LOCAL request.jwt.claims`，見 D2）。
+  以 `authenticated` 角色而非 service_role 連線
 - 多階段 Dockerfile（build → JRE runtime）+ `docker-compose.yml`（app + 本機 Postgres 供測試）
 
-驗收：`docker compose up` 後，以 `grpcurl` 帶有效 token 呼叫 `Ping` 成功；
-不帶 token 或帶偽造 token 回傳 `UNAUTHENTICATED`。
+驗收：
+1. `docker compose up` 後，以 `grpcurl` 帶有效 token 呼叫 `Ping` 成功；
+   不帶 token 或帶偽造 token 回傳 `UNAUTHENTICATED`
+2. 連線池污染測試通過（見第 6 節）—— 此項未過不得進入 Phase 2
 
 ### Phase 2 — 商業邏輯
 
@@ -233,10 +266,16 @@ Supabase 支援 HS256 共用密鑰與非對稱金鑰（JWKS）兩種，本專案
 |---|---|---|
 | Service | JUnit 5 + Mockito | 額度不足時擋下建立、操作他人資源被拒 |
 | Repository | JUnit 5 + Testcontainers（真 Postgres） | 併發扣額度不會扣成負數 |
+| **連線池隔離** | **Testcontainers + 啟用 RLS 的測試 schema** | **身分不會跨請求殘留** |
 | gRPC | in-process server | domain 例外正確對應 status code、interceptor 擋下無效 token |
 
-Testcontainers 一項為重點：額度扣除是典型競態情境（兩個請求同時到達是否都成功），
-需以真實資料庫驗證，mock 測不出來。
+兩項需要真實資料庫、mock 測不出來的重點：
+
+**併發扣額度** —— 額度扣除是典型競態情境（兩個請求同時到達是否都成功）。
+
+**連線池隔離（D2 的必要條件）** —— 測試設計：以使用者 A 的身分執行一次請求，
+歸還連線後以使用者 B 的身分執行第二次請求，斷言 B **看不到** A 的資料。
+連線池大小設為 1 以強制重用同一條連線。若身分誤用 `SET` 而非 `SET LOCAL`，此測試必然失敗。
 
 Flutter 端於 Phase 3 為 `JobRepository` 建立第一組 repository 測試，
 作為日後擴展測試覆蓋的基礎（部分解決 A4）。
@@ -245,7 +284,8 @@ Flutter 端於 Phase 3 為 `JobRepository` 建立第一組 repository 測試，
 
 | 風險 | 對策 |
 |---|---|
-| Java 繞過 RLS，授權寫錯即成 IDOR | 每個異動 rpc 強制擁有者檢查，並以測試覆蓋「操作他人資源」情境 |
+| 連線池身分殘留（誤用 `SET` 而非 `SET LOCAL`）| 最嚴重的風險。以連線池隔離測試釘死，且列為 Phase 1 的進入下一階段門檻 |
+| Java 端授權寫錯 | RLS 作為第二層兜底；每個異動 rpc 仍強制擁有者檢查，並以測試覆蓋「操作他人資源」情境 |
 | Supabase 免費專案 auto-pause 導致 Java 連線逾時 | 開發時先 restore 專案；連線設定合理 timeout 與重試 |
 | JWT 簽章方式判斷錯誤導致驗證失效 | Phase 1 第一個任務即為連線確認，不臆測 |
 | 新舊路徑並存造成行為不一致 | 一次只搬一個功能；舊實作保留可即時切回 |
