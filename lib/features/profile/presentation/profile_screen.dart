@@ -245,15 +245,14 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     setState(() => _isSaving = true);
 
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('未登入');
-
-      await Supabase.instance.client.from('users').update({
-        'display_name': _nameController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'skills': _skills,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
+      await Supabase.instance.client.rpc('upsert_my_profile', params: {
+        'p_fields': {
+          'display_name': _nameController.text.trim(),
+          'bio': _bioController.text.trim(),
+          'skills': _skills,
+        },
+      });
+      ref.invalidate(profileProvider);
 
       if (mounted) {
         Navigator.pop(context);

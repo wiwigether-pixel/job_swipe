@@ -120,18 +120,16 @@ class ProfileService {
     required List<String> skills,
     required String? imageUrl,
   }) async {
-    final updateData = <String, dynamic>{
+    final fields = <String, dynamic>{
       'display_name': name,
       'bio': bio,
       'skills': skills,
-      'updated_at': DateTime.now().toIso8601String(),
     };
-
     if (imageUrl != null) {
-      updateData['avatar_url'] = imageUrl;
+      fields['avatar_url'] = imageUrl;
     }
 
-    await _client.from('users').update(updateData).eq('id', userId);
-    logger.i('[Storage] ✅ users 表更新成功');
+    await _client.rpc('upsert_my_profile', params: {'p_fields': fields});
+    logger.i('[Storage] ✅ users 表更新成功 (RPC)');
   }
 }
