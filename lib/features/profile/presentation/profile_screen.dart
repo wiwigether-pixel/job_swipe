@@ -104,6 +104,10 @@ class _ProfileBody extends ConsumerWidget {
               if (currentRole == AppRole.jobSeeker)
                 _OpenToOpportunityTile(themeColor: themeColor),
 
+              // 薪資可見度（求職者模式下顯示）
+              if (currentRole == AppRole.jobSeeker)
+                _SalaryVisibilityTile(profile: profile, themeColor: themeColor),
+
               const SizedBox(height: 12),
 
               // 雇主專區：只在雇主身份時顯示
@@ -245,15 +249,14 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     setState(() => _isSaving = true);
 
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('未登入');
-
-      await Supabase.instance.client.from('users').update({
-        'display_name': _nameController.text.trim(),
-        'bio': _bioController.text.trim(),
-        'skills': _skills,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
+      await Supabase.instance.client.rpc('upsert_my_profile', params: {
+        'p_fields': {
+          'display_name': _nameController.text.trim(),
+          'bio': _bioController.text.trim(),
+          'skills': _skills,
+        },
+      });
+      ref.invalidate(profileProvider);
 
       if (mounted) {
         Navigator.pop(context);
@@ -773,6 +776,47 @@ class _OpenToOpportunityTileState
       label: '開放求職機會',
       subtitle: _isOpen ? '雇主可以在人才庫看到你' : '目前不接受新工作機會',
       value: _isOpen,
+      themeColor: widget.themeColor,
+      onChanged: _toggle,
+    );
+  }
+}
+
+// ── 薪資可見度開關 ────────────────────────────────────────────────────────
+
+class _SalaryVisibilityTile extends ConsumerStatefulWidget {
+  const _SalaryVisibilityTile({required this.profile, required this.themeColor});
+  final UserModel profile;
+  final Color themeColor;
+
+  @override
+  ConsumerState<_SalaryVisibilityTile> createState() =>
+      _SalaryVisibilityTileState();
+}
+
+class _SalaryVisibilityTileState extends ConsumerState<_SalaryVisibilityTile> {
+  late bool _visibleToMatched;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleToMatched = widget.profile.salaryVisibility == 'matched';
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _visibleToMatched = value);
+    await Supabase.instance.client.rpc('set_salary_visibility',
+        params: {'p_visibility': value ? 'matched' : 'private'});
+    ref.invalidate(profileProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _ToggleTile(
+      icon: Icons.payments_outlined,
+      label: '期望薪資可見度',
+      subtitle: _visibleToMatched ? '配對成功的對象可以看到你的期望薪資' : '期望薪資只有自己看得到',
+      value: _visibleToMatched,
       themeColor: widget.themeColor,
       onChanged: _toggle,
     );

@@ -203,11 +203,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         .from('user_profiles')
         .upsert(data, onConflict: 'user_id,role');
 
-    // 同步更新 users 表的角色欄位，讓 profileProvider 能讀到最新資料
-    final usersUpdate = <String, dynamic>{
-      'role': role,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
+    // 同步更新 users 表（upsert_my_profile RPC；key 帶 null = 清空該欄位）
+    final usersUpdate = <String, dynamic>{'role': role};
     if (role == 'employer') {
       usersUpdate['company_name'] = _companyNameController.text.trim();
       usersUpdate['company_size'] = _companySize;
@@ -223,12 +220,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       usersUpdate['expected_salary'] = null;
     }
 
-    logger.d('[Onboarding] 同步更新 users: $usersUpdate');
+    logger.d('[Onboarding] upsert_my_profile: $usersUpdate');
 
     await Supabase.instance.client
-        .from('users')
-        .update(usersUpdate)
-        .eq('id', user.id);
+        .rpc('upsert_my_profile', params: {'p_fields': usersUpdate});
   }
 
   void _showError(String msg) {

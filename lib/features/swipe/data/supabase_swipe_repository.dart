@@ -1,6 +1,7 @@
 
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/supabase_client.dart';
+import '../../../core/utils/user_hydration.dart';
 import '../../../shared/models/job_model.dart';
 import '../../../shared/models/user_card_model.dart';
 import '../../../shared/models/user_model.dart';
@@ -44,7 +45,7 @@ class SupabaseSwipeRepository {
 
     var query = SupabaseConfig.client
         .from('jobs')
-        .select('*, users!jobs_employer_id_fkey(company_name, avatar_url)')
+        .select()
         .eq('status', 'open')
         .neq('employer_id', userId);
 
@@ -53,36 +54,38 @@ class SupabaseSwipeRepository {
     }
 
     final data = await query.limit(20).order('created_at', ascending: false);
-    return (data as List).map((r) => SwipeCard.job(JobModel.fromSupabase(r as Map<String, dynamic>))).toList();
+    final jobs = (data as List)
+        .map((r) => Map<String, dynamic>.from(r as Map))
+        .toList();
+
+    // 雇主公開資料（原本靠 users embed join，REVOKE 後改 RPC）
+    final employerMap = await fetchPublicUsersMap(
+        jobs.map((j) => j['employer_id'] as String).toList());
+    for (final j in jobs) {
+      j['users'] = employerMap[j['employer_id']];
+    }
+
+    return jobs.map((r) => SwipeCard.job(JobModel.fromSupabase(r))).toList();
   }
 
   Future<List<SwipeCard>> _getTalentCards({required String userId}) async {
-    final swipedData = await SupabaseConfig.client.from('swipes').select('target_id').eq('swiper_id', userId).eq('target_type', 'user');
-    final swipedIds = (swipedData as List).map((r) => r['target_id'] as String).toList();
-
-    var query = SupabaseConfig.client.from('user_cards').select().eq('role', 'job_seeker').eq('is_open_to_opportunity', true).neq('user_id', userId);
-    if (swipedIds.isNotEmpty) {
-      query = query.not('user_id', 'in', '(${swipedIds.map((id) => '"$id"').join(',')})');
-    }
-
-    final data = await query.limit(20);
-    return (data as List).map((r) => SwipeCard.user(UserCardModel.fromSupabase(r as Map<String, dynamic>))).toList();
+    final data = await SupabaseConfig.client
+        .rpc('get_swipe_cards', params: {'p_role': 'employer', 'p_limit': 20});
+    return (data as List)
+        .map((r) => SwipeCard.user(
+            UserCardModel.fromSupabase(Map<String, dynamic>.from(r as Map))))
+        .toList();
   }
 
-  Future<List<SwipeCard>> _getPeerCards({required String userId, required List<String> mySkills}) async {
-    final swipedData = await SupabaseConfig.client.from('swipes').select('target_id').eq('swiper_id', userId).eq('target_type', 'user');
-    final swipedIds = (swipedData as List).map((r) => r['target_id'] as String).toList();
-
-    var query = SupabaseConfig.client.from('user_cards').select().eq('is_open_to_exchange', true).neq('user_id', userId);
-    if (swipedIds.isNotEmpty) {
-      query = query.not('user_id', 'in', '(${swipedIds.map((id) => '"$id"').join(',')})');
-    }
-    if (mySkills.isNotEmpty) {
-      query = query.filter('skills', 'ov', '{${mySkills.map((s) => '"$s"').join(',')}}');
-    }
-
-    final data = await query.limit(20);
-    return (data as List).map((r) => SwipeCard.user(UserCardModel.fromSupabase(r as Map<String, dynamic>))).toList();
+  Future<List<SwipeCard>> _getPeerCards(
+      {required String userId, required List<String> mySkills}) async {
+    // 技能重疊與已滑排除都在 DB 函式內處理（讀 users.skills）
+    final data = await SupabaseConfig.client
+        .rpc('get_swipe_cards', params: {'p_role': 'peer', 'p_limit': 20});
+    return (data as List)
+        .map((r) => SwipeCard.user(
+            UserCardModel.fromSupabase(Map<String, dynamic>.from(r as Map))))
+        .toList();
   }
 
   // --- 核心邏輯：滑卡動作 ---

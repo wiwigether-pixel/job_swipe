@@ -6,7 +6,7 @@ part of 'current_role_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentRoleHash() => r'fcbd6371c7e381b41fa8ca687f010da822a43937';
+String _$currentRoleHash() => r'44c944d117880724eae8372953f36b479e9e07c4';
 
 /// See also [CurrentRole].
 @ProviderFor(CurrentRole)

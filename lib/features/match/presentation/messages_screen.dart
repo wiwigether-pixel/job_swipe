@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/utils/user_hydration.dart';
 import '../../../shared/models/user_model.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────
@@ -29,31 +30,41 @@ class MatchedChatsNotifier
     if (role == AppRole.jobSeeker) {
       final data = await Supabase.instance.client
           .from('matches')
-          .select('''
-            id, status, created_at,
-            jobs (
-              id, title,
-              users!jobs_employer_id_fkey ( display_name, company_name, avatar_url )
-            )
-          ''')
+          .select('id, status, created_at, jobs ( id, title, employer_id )')
           .eq('job_seeker_id', user.id)
           .eq('status', 'accepted')
           .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data as List);
+      final rows = (data as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+      final employerIds = rows
+          .map((r) => (r['jobs'] as Map?)?['employer_id'] as String?)
+          .whereType<String>()
+          .toList();
+      final usersMap = await fetchPublicUsersMap(employerIds);
+      for (final r in rows) {
+        final jobs = r['jobs'] as Map?;
+        if (jobs != null) {
+          r['jobs'] = {...jobs, 'users': usersMap[jobs['employer_id']]};
+        }
+      }
+      return rows;
     } else {
       final data = await Supabase.instance.client
           .from('matches')
-          .select('''
-            id, status, created_at,
-            job_seeker:users!matches_job_seeker_id_fkey (
-              id, display_name, avatar_url
-            ),
-            jobs ( id, title )
-          ''')
+          .select('id, status, created_at, job_seeker_id, jobs ( id, title )')
           .eq('employer_id', user.id)
           .eq('status', 'accepted')
           .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data as List);
+      final rows = (data as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+      final usersMap = await fetchPublicUsersMap(
+          rows.map((r) => r['job_seeker_id'] as String).toList());
+      for (final r in rows) {
+        r['job_seeker'] = usersMap[r['job_seeker_id']];
+      }
+      return rows;
     }
   }
 

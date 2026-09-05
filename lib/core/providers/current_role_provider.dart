@@ -16,7 +16,7 @@ class CurrentRole extends _$CurrentRole {
 
     if (!_manuallySet) {
       // users.role 就是當前身份，直接讀
-      // profileProvider stream 更新後這裡自動跟著變
+      // profileProvider 被 invalidate 重抓後這裡自動跟著變
       return profileAsync.valueOrNull?.effectiveRole ?? AppRole.jobSeeker;
     }
     return state;
@@ -35,12 +35,11 @@ class CurrentRole extends _$CurrentRole {
 
     try {
       // 直接更新 users.role（這就是當前身份的儲存位置）
-      // profileProvider stream 會收到更新，currentRoleProvider.build() 重新執行
-      // 但因為 _manuallySet=true，build() 會 return state 而不覆蓋
+      // 寫入後 ref.invalidate(profileProvider) 會重新抓資料；
+      // 因為 _manuallySet=true，build() 會 return state 而不覆蓋
       await Supabase.instance.client
-          .from('users')
-          .update({'role': newRole.toDbString})
-          .eq('id', user.id);
+          .rpc('upsert_my_profile', params: {'p_fields': {'role': newRole.toDbString}});
+      ref.invalidate(profileProvider);
 
       logger.i('[CurrentRole] users.role 更新為 ${newRole.toDbString}');
     } catch (e) {
