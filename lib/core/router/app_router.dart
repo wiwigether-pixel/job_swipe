@@ -14,6 +14,7 @@ import '../../features/match/presentation/messages_screen.dart';
 import '../../features/match/presentation/matches_screen.dart';
 import '../../features/chat/presentation/chat_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/marketing/presentation/campaign_screen.dart';
 import '../../features/admin/data/admin_provider.dart';
 import '../../features/admin/presentation/admin_shell.dart';
@@ -41,6 +42,7 @@ abstract class AppRoutes {
   static const messages = '/messages';
   static const matches = '/matches';
   static const profile = '/profile';
+  static const settings = '/settings';
   static const campaign = '/campaign';
   static const admin = '/admin';
   static const adminDashboard = '/admin/dashboard';
@@ -210,6 +212,10 @@ GoRouter appRouter(AppRouterRef ref) {
           final otherName = state.extra as String? ?? '對方';
           return ChatScreen(matchId: matchId, otherName: otherName);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, __) => const SettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.campaign,

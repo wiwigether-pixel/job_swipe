@@ -138,6 +138,12 @@ class _ProfileBody extends ConsumerWidget {
                 onTap: () => context.push('/campaign'),
               ),
               _ActionTile(
+                icon: Icons.settings_outlined,
+                label: '設定',
+                themeColor: const Color(0xFF6C63FF),
+                onTap: () => context.push('/settings'),
+              ),
+              _ActionTile(
                 icon: Icons.edit,
                 label: '編輯個人資料',
                 themeColor: themeColor,
