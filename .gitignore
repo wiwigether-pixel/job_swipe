@@ -46,3 +46,6 @@ app.*.map.json
 
 # 絕對不要讓 .env 進入 Git
 .env
+
+# Claude Code 本機工作區（git worktree），不進版控
+.claude/worktrees/
