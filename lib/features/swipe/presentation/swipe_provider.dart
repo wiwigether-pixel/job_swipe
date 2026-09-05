@@ -2,6 +2,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/supabase_swipe_repository.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../../core/providers/blocks_provider.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/providers/profile_provider.dart';
 
@@ -27,11 +28,17 @@ class RecommendedJobs extends _$RecommendedJobs {
     final mySkills = profile?.skills ?? [];
 
     final repo = ref.read(swipeRepositoryProvider);
-    return repo.getRecommendedCards(
+    final cards = await repo.getRecommendedCards(
       userId: user.id,
       role: currentRole,
       mySkills: mySkills,
     );
+    final blocked = await ref.watch(blockedIdsProvider.future);
+    if (blocked.isEmpty) return cards;
+    return cards.where((c) {
+      final ownerId = c.isJob ? c.job!.employerId : c.userCard!.userId;
+      return !blocked.contains(ownerId);
+    }).toList();
   }
 
   Future<bool> onSwipe({

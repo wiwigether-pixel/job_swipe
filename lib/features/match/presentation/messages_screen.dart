@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/providers/blocks_provider.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/block_filter.dart';
 import '../../../core/utils/user_hydration.dart';
 import '../../../shared/models/user_model.dart';
 
@@ -20,7 +22,9 @@ class MatchedChatsNotifier
   @override
   Future<List<Map<String, dynamic>>> build() async {
     ref.watch(currentRoleProvider);
-    return _fetch();
+    final rows = await _fetch();
+    final blocked = await ref.watch(blockedIdsProvider.future);
+    return filterBlockedMatchRows(rows, blocked);
   }
 
   Future<List<Map<String, dynamic>>> _fetch() async {
