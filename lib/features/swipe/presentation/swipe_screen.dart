@@ -5,6 +5,7 @@ import '../../../shared/widgets/swipe_card_wrapper.dart';
 import '../../match/presentation/match_dialog.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/theme/app_colors.dart';
 
 import 'swipe_card_stack.dart';
 import 'swipe_provider.dart';
@@ -40,7 +41,7 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('操作失敗，請稍後再試'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('操作失敗，請稍後再試'), backgroundColor: context.colors.danger),
         );
       }
     }
@@ -59,7 +60,7 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
     final themeColor = currentRole.themeColor;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -204,7 +205,7 @@ class _CircleButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF111111),
+          color: context.colors.surfaceAlt,
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
           boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 4))],
         ),
@@ -228,11 +229,11 @@ class _EmptyView extends StatelessWidget {
         children: [
           Icon(Icons.search_off, size: 80, color: themeColor.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
-          const Text('今天的都看完了', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('今天的都看完了', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
           const SizedBox(height: 8),
           Text(
             '明天再來看看新的${switch (currentRole) { AppRole.jobSeeker => '職缺', AppRole.employer => '人才', AppRole.peer => '同業' }}吧！',
-            style: const TextStyle(color: Colors.white38),
+            style: TextStyle(color: context.colors.textTertiary),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -266,11 +267,11 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFFF4757)),
+            Icon(Icons.error_outline, size: 64, color: context.colors.danger),
             const SizedBox(height: 16),
-            const Text('載入失敗', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text('載入失敗', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
             const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white38)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(color: context.colors.textTertiary)),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: onRetry,
