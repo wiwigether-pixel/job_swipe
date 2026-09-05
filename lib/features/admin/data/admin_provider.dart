@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../domain/admin_role.dart';
 import 'package:job_swipe/core/utils/logger.dart';
+import '../../../core/utils/user_hydration.dart';
 
 part 'admin_provider.g.dart';
 
@@ -42,20 +43,19 @@ Future<AdminStats> adminStats(AdminStatsRef ref) async {
     return res.count;
   }
 
-  final results = await Future.wait([
-    count('users'),
-    count('users', eqCol: 'role', eqVal: 'job_seeker'),
-    count('users', eqCol: 'role', eqVal: 'employer'),
+  final results = await Future.wait<dynamic>([
+    client.rpc('admin_stats'),
     count('jobs'),
     count('matches', eqCol: 'status', eqVal: 'accepted'),
   ]);
 
+  final stats = ((results[0] as List).first as Map);
   return AdminStats(
-    totalUsers: results[0],
-    jobSeekers: results[1],
-    employers: results[2],
-    totalJobs: results[3],
-    acceptedMatches: results[4],
+    totalUsers: (stats['total_users'] as num).toInt(),
+    jobSeekers: (stats['job_seekers'] as num).toInt(),
+    employers: (stats['employers'] as num).toInt(),
+    totalJobs: results[1] as int,
+    acceptedMatches: results[2] as int,
   );
 }
 
@@ -83,19 +83,15 @@ Future<List<Map<String, dynamic>>> adminUsers(
   String? roleFilter,
 }) async {
   final client = Supabase.instance.client;
-  var query = client
-      .from('users')
-      .select('id, email, role, display_name, avatar_url, status, created_at');
-
-  if (search.isNotEmpty) {
-    query = query.or('display_name.ilike.%$search%,email.ilike.%$search%');
-  }
-  if (roleFilter != null) {
-    query = query.eq('role', roleFilter);
-  }
-
-  final data = await query.order('created_at', ascending: false).limit(100);
-  return List<Map<String, dynamic>>.from(data as List);
+  final data = await client.rpc('admin_list_users', params: {
+    'p_search': search,
+    'p_role': roleFilter,
+    'p_limit': 100,
+    'p_offset': 0,
+  });
+  return (data as List)
+      .map((r) => Map<String, dynamic>.from(r as Map))
+      .toList();
 }
 
 /// ── 職缺管理 ─────────────────────────────────────────────────
@@ -105,15 +101,29 @@ Future<List<Map<String, dynamic>>> adminJobs(
   String? statusFilter,
 }) async {
   final client = Supabase.instance.client;
-  var query = client.from('jobs').select(
-      'id, title, status, created_at, employer_id, users(company_name, display_name)');
+  var query = client
+      .from('jobs')
+      .select('id, title, status, created_at, employer_id');
 
   if (statusFilter != null) {
     query = query.eq('status', statusFilter);
   }
 
   final data = await query.order('created_at', ascending: false).limit(100);
-  return List<Map<String, dynamic>>.from(data as List);
+  final rows = (data as List)
+      .map((r) => Map<String, dynamic>.from(r as Map))
+      .toList();
+
+  final ids = rows.map((r) => r['employer_id'] as String).toSet().toList();
+  final userRows = await client.rpc('admin_get_users', params: {'p_ids': ids});
+  final usersMap = {
+    for (final u in (userRows as List))
+      (u as Map)['id'] as String: Map<String, dynamic>.from(u),
+  };
+  for (final r in rows) {
+    r['users'] = usersMap[r['employer_id']];
+  }
+  return rows;
 }
 
 /// ── 檢舉管理 ─────────────────────────────────────────────────
@@ -124,14 +134,31 @@ Future<List<Map<String, dynamic>>> adminReports(
 }) async {
   final client = Supabase.instance.client;
   var query = client.from('reports').select(
-      'id, reporter_id, target_type, target_id, match_id, reason, status, admin_note, resolved_at, created_at, reporter:reporter_id(display_name, email)');
+      'id, reporter_id, target_type, target_id, match_id, reason, status, admin_note, resolved_at, created_at');
 
   if (statusFilter.isNotEmpty) {
     query = query.eq('status', statusFilter);
   }
 
   final data = await query.order('created_at', ascending: false).limit(100);
-  return List<Map<String, dynamic>>.from(data as List);
+  final rows = (data as List)
+      .map((r) => Map<String, dynamic>.from(r as Map))
+      .toList();
+
+  final ids = rows
+      .map((r) => r['reporter_id'] as String?)
+      .whereType<String>()
+      .toSet()
+      .toList();
+  final userRows = await client.rpc('admin_get_users', params: {'p_ids': ids});
+  final usersMap = {
+    for (final u in (userRows as List))
+      (u as Map)['id'] as String: Map<String, dynamic>.from(u),
+  };
+  for (final r in rows) {
+    r['reporter'] = usersMap[r['reporter_id']];
+  }
+  return rows;
 }
 
 /// 載入某個對話（match）的訊息，供管理員審核
@@ -142,11 +169,24 @@ Future<List<Map<String, dynamic>>> reportConversation(
 ) async {
   final data = await Supabase.instance.client
       .from('messages')
-      .select('id, sender_id, content, created_at, sender:sender_id(display_name)')
+      .select('id, sender_id, content, created_at')
       .eq('match_id', matchId)
       .order('created_at', ascending: true)
       .limit(200);
-  return List<Map<String, dynamic>>.from(data as List);
+  final rows = (data as List)
+      .map((r) => Map<String, dynamic>.from(r as Map))
+      .toList();
+
+  final ids = rows
+      .map((r) => r['sender_id'] as String?)
+      .whereType<String>()
+      .toSet()
+      .toList();
+  final usersMap = await fetchPublicUsersMap(ids);
+  for (final r in rows) {
+    r['sender'] = usersMap[r['sender_id']];
+  }
+  return rows;
 }
 
 /// ── 站內信 / 官方信箱 ────────────────────────────────────────
@@ -157,14 +197,31 @@ Future<List<Map<String, dynamic>>> adminInbox(
 }) async {
   final client = Supabase.instance.client;
   var query = client.from('inbox_messages').select(
-      'id, user_id, sender_name, sender_email, subject, body, status, admin_reply, replied_by, replied_at, created_at, sender:user_id(display_name, email)');
+      'id, user_id, sender_name, sender_email, subject, body, status, admin_reply, replied_by, replied_at, created_at');
 
   if (statusFilter.isNotEmpty) {
     query = query.eq('status', statusFilter);
   }
 
   final data = await query.order('created_at', ascending: false).limit(100);
-  return List<Map<String, dynamic>>.from(data as List);
+  final rows = (data as List)
+      .map((r) => Map<String, dynamic>.from(r as Map))
+      .toList();
+
+  final ids = rows
+      .map((r) => r['user_id'] as String?)
+      .whereType<String>()
+      .toSet()
+      .toList();
+  final userRows = await client.rpc('admin_get_users', params: {'p_ids': ids});
+  final usersMap = {
+    for (final u in (userRows as List))
+      (u as Map)['id'] as String: Map<String, dynamic>.from(u),
+  };
+  for (final r in rows) {
+    r['sender'] = usersMap[r['user_id']];
+  }
+  return rows;
 }
 
 /// ── 管理操作 ─────────────────────────────────────────────────
@@ -178,12 +235,13 @@ class AdminActions {
   SupabaseClient get _client => Supabase.instance.client;
 
   Future<void> setUserStatus(String userId, String status) async {
-    await _client.from('users').update({'status': status}).eq('id', userId);
+    await _client.rpc('admin_set_user_status',
+        params: {'p_target': userId, 'p_status': status});
     ref.invalidate(adminUsersProvider);
   }
 
   Future<void> deleteUser(String userId) async {
-    await _client.from('users').delete().eq('id', userId);
+    await _client.rpc('admin_delete_user', params: {'p_target': userId});
     ref.invalidate(adminUsersProvider);
     ref.invalidate(adminStatsProvider);
   }

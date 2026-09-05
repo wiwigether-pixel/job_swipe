@@ -22,7 +22,7 @@ final adminRoleProvider = FutureProvider<AdminRole?>.internal(
 );
 
 typedef AdminRoleRef = FutureProviderRef<AdminRole?>;
-String _$adminStatsHash() => r'ff8eb37dc190a0b9fc8ae1fe69388bc442dca8e6';
+String _$adminStatsHash() => r'3807b6961495af0154e8d484143faf325daba294';
 
 /// ── 後台統計（Dashboard 用）──────────────────────────────────
 ///
@@ -38,7 +38,7 @@ final adminStatsProvider = AutoDisposeFutureProvider<AdminStats>.internal(
 );
 
 typedef AdminStatsRef = AutoDisposeFutureProviderRef<AdminStats>;
-String _$adminUsersHash() => r'715a86373007b541b339645eca76155871126ccf';
+String _$adminUsersHash() => r'9a465c6a7e009e0936b8f524f79c5a5a78e78ffa';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -220,7 +220,7 @@ class _AdminUsersProviderElement
   String? get roleFilter => (origin as AdminUsersProvider).roleFilter;
 }
 
-String _$adminJobsHash() => r'd22f32534dd906eef74e2a60172581a67757f9bf';
+String _$adminJobsHash() => r'7f30476ffa4eb8f50686db134826f8aa2f9c5a23';
 
 /// ── 職缺管理 ─────────────────────────────────────────────────
 ///
@@ -361,7 +361,7 @@ class _AdminJobsProviderElement
   String? get statusFilter => (origin as AdminJobsProvider).statusFilter;
 }
 
-String _$adminReportsHash() => r'4828f8572911c17f856dafc65bf1c2887b881258';
+String _$adminReportsHash() => r'a35f9095f725ddf84a4c91d7df21ba02c320200e';
 
 /// ── 檢舉管理 ─────────────────────────────────────────────────
 ///
@@ -507,7 +507,7 @@ class _AdminReportsProviderElement
 }
 
 String _$reportConversationHash() =>
-    r'20e7d73e8f436d9e639daa9931bad8c64d965a03';
+    r'3ad1d3f4cdfa7fa1888810f90df2ddf48252bd86';
 
 /// 載入某個對話（match）的訊息，供管理員審核
 ///
@@ -653,7 +653,7 @@ class _ReportConversationProviderElement
   String get matchId => (origin as ReportConversationProvider).matchId;
 }
 
-String _$adminInboxHash() => r'4657715cc99e7f6a7a9cd1dd566fb9fa39fbbd74';
+String _$adminInboxHash() => r'85bde59574c5d585807c00419f15d08c6ede695a';
 
 /// ── 站內信 / 官方信箱 ────────────────────────────────────────
 ///
