@@ -44,6 +44,11 @@ class SupabaseConfig {
   }
 
   /// 取得 Supabase Client 的便捷 getter
-  /// 使用方式：SupabaseConfig.client.from('users').select()
+  /// 使用方式：SupabaseConfig.client.from('jobs').select()
+  ///
+  /// ⚠️ `users` 表已 REVOKE，client 不能直接查詢（見
+  /// sql/protected_data_007_revoke.sql）。改用 RPC：
+  /// 自己的資料 get_my_profile / upsert_my_profile，
+  /// 他人的公開資料 get_users_public（或 core/utils/user_hydration.dart）。
   static SupabaseClient get client => Supabase.instance.client;
 }
