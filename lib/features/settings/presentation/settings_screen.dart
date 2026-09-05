@@ -52,6 +52,9 @@ class SettingsScreen extends ConsumerWidget {
                 label: '變更密碼',
                 onTap: () => _showChangePasswordDialog(context)),
             _NavTile(
+                label: '封鎖名單',
+                onTap: () => context.push('/settings/blocked')),
+            _NavTile(
                 label: '登出',
                 labelColor: context.colors.danger,
                 onTap: () => _confirmSignOut(context, ref)),
