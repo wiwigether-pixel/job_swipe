@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/providers/blocks_provider.dart';
+import '../../match/presentation/matches_screen.dart';
+import '../../match/presentation/messages_screen.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({
     super.key,
     required this.matchId,
@@ -13,10 +17,10 @@ class ChatScreen extends StatefulWidget {
   final String otherName;
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _client = Supabase.instance.client;
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
@@ -196,6 +200,52 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _blockOtherUser() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('封鎖 ${widget.otherName}？'),
+        content: const Text('封鎖後將不再看到對方的卡片與訊息，可在「設定 → 封鎖名單」解除。'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('取消')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('封鎖')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      // 從 match 撈出對方 user id（自己是其中一方）
+      final row = await _client
+          .from('matches')
+          .select('job_seeker_id, employer_id')
+          .eq('id', widget.matchId)
+          .single();
+      final myId = _client.auth.currentUser!.id;
+      final otherId = row['job_seeker_id'] == myId
+          ? row['employer_id'] as String
+          : row['job_seeker_id'] as String;
+
+      await ref.read(blockedIdsProvider.notifier).block(otherId);
+      ref.invalidate(matchedChatsProvider);
+      ref.invalidate(pendingMatchesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('已封鎖')));
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('封鎖失敗，請稍後再試')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final myId = _client.auth.currentUser?.id ?? '';
@@ -218,10 +268,16 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: '檢舉',
-            icon: Icon(Icons.flag_outlined, color: context.colors.textSecondary),
-            onPressed: _reportConversation,
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: context.colors.textSecondary),
+            onSelected: (v) {
+              if (v == 'report') _reportConversation();
+              if (v == 'block') _blockOtherUser();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'report', child: Text('檢舉對話')),
+              PopupMenuItem(value: 'block', child: Text('封鎖對方')),
+            ],
           ),
         ],
       ),
