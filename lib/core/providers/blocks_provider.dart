@@ -20,8 +20,10 @@ class BlockedIds extends _$BlockedIds {
 
   Future<void> block(String userId) async {
     final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) return;
     await client.from('blocks').insert({
-      'blocker_id': client.auth.currentUser!.id,
+      'blocker_id': user.id,
       'blocked_id': userId,
     });
     ref.invalidateSelf();
@@ -29,10 +31,12 @@ class BlockedIds extends _$BlockedIds {
 
   Future<void> unblock(String userId) async {
     final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) return;
     await client
         .from('blocks')
         .delete()
-        .eq('blocker_id', client.auth.currentUser!.id)
+        .eq('blocker_id', user.id)
         .eq('blocked_id', userId);
     ref.invalidateSelf();
   }

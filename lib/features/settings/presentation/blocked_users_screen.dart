@@ -57,9 +57,18 @@ class BlockedUsersScreen extends ConsumerWidget {
                 title: Text(u['display_name'] as String? ?? '未知',
                     style: TextStyle(color: context.colors.textPrimary)),
                 trailing: OutlinedButton(
-                  onPressed: () => ref
-                      .read(blockedIdsProvider.notifier)
-                      .unblock(u['id'] as String),
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    try {
+                      await ref
+                          .read(blockedIdsProvider.notifier)
+                          .unblock(u['id'] as String);
+                    } catch (_) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('解除封鎖失敗，請稍後再試')),
+                      );
+                    }
+                  },
                   child: const Text('解除封鎖'),
                 ),
               );

@@ -225,7 +225,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           .select('job_seeker_id, employer_id')
           .eq('id', widget.matchId)
           .single();
-      final myId = _client.auth.currentUser!.id;
+      if (!mounted) return;
+      final myId = _client.auth.currentUser?.id;
+      if (myId == null) return;
       final otherId = row['job_seeker_id'] == myId
           ? row['employer_id'] as String
           : row['job_seeker_id'] as String;
