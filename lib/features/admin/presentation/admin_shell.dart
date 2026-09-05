@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/admin_provider.dart';
+import '../../../core/theme/app_colors.dart';
 
 const _adminAccent = Color(0xFFFF6B35);
 
@@ -37,26 +38,26 @@ class AdminShell extends ConsumerWidget {
         // 窄螢幕（手機）：側邊欄收進 Drawer，內容佔滿全寬
         if (!isWide) {
           return Scaffold(
-            backgroundColor: const Color(0xFF0D0D0D),
+            backgroundColor: context.colors.surfaceAlt,
             appBar: AppBar(
-              backgroundColor: const Color(0xFF141414),
+              backgroundColor: context.colors.surfaceAlt,
               elevation: 0,
               iconTheme: const IconThemeData(color: _adminAccent),
-              title: const Row(
+              title: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_rounded, color: _adminAccent, size: 22),
-                  SizedBox(width: 8),
+                  const Icon(Icons.shield_rounded, color: _adminAccent, size: 22),
+                  const SizedBox(width: 8),
                   Text('管理後台',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           fontSize: 17,
                           fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
             drawer: Drawer(
-              backgroundColor: const Color(0xFF141414),
+              backgroundColor: context.colors.surfaceAlt,
               child: _Sidebar(
                 selectedIndex: selectedIndex,
                 adminRoleLabel: adminRole?.label,
@@ -69,7 +70,7 @@ class AdminShell extends ConsumerWidget {
 
         // 寬螢幕（桌面）：側邊欄常駐
         return Scaffold(
-          backgroundColor: const Color(0xFF0D0D0D),
+          backgroundColor: context.colors.surfaceAlt,
           body: Row(
             children: [
               SizedBox(
@@ -108,21 +109,21 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF141414),
+      color: context.colors.surfaceAlt,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Icon(Icons.shield_rounded, color: _adminAccent, size: 26),
-                  SizedBox(width: 10),
+                  const Icon(Icons.shield_rounded, color: _adminAccent, size: 26),
+                  const SizedBox(width: 10),
                   Text('管理後台',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold)),
                 ],
@@ -191,11 +192,11 @@ class _NavItem extends StatelessWidget {
         child: Row(
           children: [
             Icon(icon,
-                color: selected ? _adminAccent : Colors.white54, size: 20),
+                color: selected ? _adminAccent : context.colors.textSecondary, size: 20),
             const SizedBox(width: 14),
             Text(label,
                 style: TextStyle(
-                    color: selected ? Colors.white : Colors.white54,
+                    color: selected ? context.colors.textPrimary : context.colors.textSecondary,
                     fontSize: 14,
                     fontWeight:
                         selected ? FontWeight.bold : FontWeight.normal)),

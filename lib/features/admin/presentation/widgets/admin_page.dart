@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 const adminAccent = Color(0xFFFF6B35);
 
@@ -29,7 +30,7 @@ class AdminPage extends StatelessWidget {
             children: [
               Text(title,
                   style: TextStyle(
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       fontSize: narrow ? 22 : 26,
                       fontWeight: FontWeight.bold)),
               const Spacer(),
@@ -37,8 +38,7 @@ class AdminPage extends StatelessWidget {
               if (onRefresh != null)
                 IconButton(
                   onPressed: onRefresh,
-                  icon:
-                      const Icon(Icons.refresh_rounded, color: Colors.white54),
+                  icon: Icon(Icons.refresh_rounded, color: context.colors.textSecondary),
                   tooltip: '重新整理',
                 ),
             ],

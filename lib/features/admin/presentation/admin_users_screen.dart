@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/admin_provider.dart';
 import 'widgets/admin_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
   const AdminUsersScreen({super.key});
@@ -49,13 +50,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   child: Text('載入失敗：$e',
                       style: const TextStyle(color: Colors.redAccent))),
               data: (users) => users.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('沒有符合的用戶',
-                          style: TextStyle(color: Colors.white38)))
+                          style: TextStyle(color: context.colors.textTertiary)))
                   : ListView.separated(
                       itemCount: users.length,
                       separatorBuilder: (_, __) =>
-                          const Divider(color: Colors.white10, height: 1),
+                          Divider(color: context.colors.divider, height: 1),
                       itemBuilder: (_, i) => _UserRow(
                         user: users[i],
                         canDelete: myRole?.canDeleteUsers ?? false,
@@ -90,14 +91,14 @@ class _Toolbar extends StatelessWidget {
 
         final searchField = TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: context.colors.textPrimary),
           onSubmitted: onSearch,
           decoration: InputDecoration(
             hintText: '搜尋姓名或 email...',
-            hintStyle: const TextStyle(color: Colors.white38),
-            prefixIcon: const Icon(Icons.search, color: Colors.white38),
+            hintStyle: TextStyle(color: context.colors.textTertiary),
+            prefixIcon: Icon(Icons.search, color: context.colors.textTertiary),
             filled: true,
-            fillColor: const Color(0xFF1A1A1A),
+            fillColor: context.colors.surface,
             contentPadding: const EdgeInsets.symmetric(vertical: 4),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -154,12 +155,12 @@ class _RoleChip extends StatelessWidget {
         label: Text(label),
         selected: selected,
         onSelected: (_) => onTap(value),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.colors.surface,
         selectedColor: adminAccent.withValues(alpha: 0.25),
         labelStyle: TextStyle(
-            color: selected ? adminAccent : Colors.white54, fontSize: 13),
+            color: selected ? adminAccent : context.colors.textSecondary, fontSize: 13),
         side: BorderSide(
-            color: selected ? adminAccent : Colors.white12),
+            color: selected ? adminAccent : context.colors.divider),
       ),
     );
   }
@@ -186,12 +187,12 @@ class _UserRow extends ConsumerWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: Colors.white10,
+            backgroundColor: context.colors.divider,
             backgroundImage: (avatar != null && avatar.isNotEmpty)
                 ? NetworkImage(avatar)
                 : null,
             child: (avatar == null || avatar.isEmpty)
-                ? const Icon(Icons.person, color: Colors.white38, size: 20)
+                ? Icon(Icons.person, color: context.colors.textTertiary, size: 20)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -202,22 +203,23 @@ class _UserRow extends ConsumerWidget {
                 Text(name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                    style: TextStyle(
+                        color: context.colors.textPrimary, fontWeight: FontWeight.w600)),
                 Text(email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
-                        const TextStyle(color: Colors.white38, fontSize: 12)),
+                        TextStyle(color: context.colors.textTertiary, fontSize: 12)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
                   runSpacing: 4,
                   children: [
+                    // Role badge: Colors.white24 is a neutral tint — keep as semantic badge color
                     _Badge(_roleLabel(role), Colors.white24),
                     _Badge(suspended ? '已停權' : '正常',
                         suspended
-                            ? Colors.redAccent
+                            ? context.colors.danger
                             : const Color(0xFF0CBB78)),
                   ],
                 ),
@@ -245,8 +247,8 @@ class _UserRow extends ConsumerWidget {
             IconButton(
               tooltip: '刪除',
               onPressed: () => _confirmDelete(context, ref, id, name),
-              icon: const Icon(Icons.delete_outline,
-                  color: Colors.redAccent, size: 20),
+              icon: Icon(Icons.delete_outline,
+                  color: context.colors.danger, size: 20),
             ),
         ],
       ),
@@ -265,16 +267,16 @@ class _UserRow extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: const Text('確認刪除', style: TextStyle(color: Colors.white)),
+        backgroundColor: ctx.colors.surface,
+        title: Text('確認刪除', style: TextStyle(color: ctx.colors.textPrimary)),
         content: Text('確定要永久刪除「$name」嗎？此操作無法復原。',
-            style: const TextStyle(color: Colors.white70)),
+            style: TextStyle(color: ctx.colors.textSecondary)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('取消', style: TextStyle(color: Colors.white54))),
+              child: Text('取消', style: TextStyle(color: ctx.colors.textSecondary))),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(backgroundColor: ctx.colors.danger),
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(adminActionsProvider).deleteUser(id);

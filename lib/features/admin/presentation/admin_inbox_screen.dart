@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/admin_provider.dart';
 import 'widgets/admin_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 class AdminInboxScreen extends ConsumerStatefulWidget {
   const AdminInboxScreen({super.key});
@@ -45,13 +46,13 @@ class _AdminInboxScreenState extends ConsumerState<AdminInboxScreen> {
                   child: Text('載入失敗：$e',
                       style: const TextStyle(color: Colors.redAccent))),
               data: (messages) => messages.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('沒有信件',
-                          style: TextStyle(color: Colors.white38)))
+                          style: TextStyle(color: context.colors.textTertiary)))
                   : ListView.separated(
                       itemCount: messages.length,
                       separatorBuilder: (_, __) =>
-                          const Divider(color: Colors.white10, height: 1),
+                          Divider(color: context.colors.divider, height: 1),
                       itemBuilder: (_, i) => _InboxRow(message: messages[i]),
                     ),
             ),
@@ -78,11 +79,11 @@ class _StatusChip extends StatelessWidget {
         label: Text(label),
         selected: selected,
         onSelected: (_) => onTap(value),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.colors.surface,
         selectedColor: adminAccent.withValues(alpha: 0.25),
         labelStyle: TextStyle(
-            color: selected ? adminAccent : Colors.white54, fontSize: 13),
-        side: BorderSide(color: selected ? adminAccent : Colors.white12),
+            color: selected ? adminAccent : context.colors.textSecondary, fontSize: 13),
+        side: BorderSide(color: selected ? adminAccent : context.colors.divider),
       ),
     );
   }
@@ -121,7 +122,7 @@ class _InboxRow extends ConsumerWidget {
                 Text(
                   subject == null || subject.isEmpty ? '（無主旨）' : subject,
                   style: TextStyle(
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       fontWeight: isUnread ? FontWeight.bold : FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -131,11 +132,11 @@ class _InboxRow extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
-                        const TextStyle(color: Colors.white54, fontSize: 13)),
+                        TextStyle(color: context.colors.textSecondary, fontSize: 13)),
                 const SizedBox(height: 2),
                 Text('寄件人：$senderName',
                     style:
-                        const TextStyle(color: Colors.white38, fontSize: 12)),
+                        TextStyle(color: context.colors.textTertiary, fontSize: 12)),
               ],
             ),
           ),
@@ -143,6 +144,7 @@ class _InboxRow extends ConsumerWidget {
           if (status == 'replied')
             const _Badge('已回覆', Color(0xFF0CBB78))
           else if (status == 'archived')
+            // Colors.white38 is semantic dim for archived state
             const _Badge('已封存', Colors.white38),
           TextButton.icon(
             onPressed: () => _openDetail(context, ref),
@@ -152,8 +154,8 @@ class _InboxRow extends ConsumerWidget {
           if (status != 'archived')
             TextButton(
               onPressed: () => ref.read(adminActionsProvider).archiveInbox(id),
-              child: const Text('封存',
-                  style: TextStyle(color: Colors.white38)),
+              child: Text('封存',
+                  style: TextStyle(color: context.colors.textTertiary)),
             ),
         ],
       ),
@@ -181,7 +183,7 @@ class _InboxRow extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.colors.surface,
         child: SizedBox(
           width: width < 560 ? width - 48 : 560,
           child: _MessageDetail(message: message),
@@ -238,31 +240,31 @@ class _MessageDetailState extends ConsumerState<_MessageDetail> {
               Expanded(
                 child: Text(
                   subject == null || subject.isEmpty ? '（無主旨）' : subject,
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold),
                 ),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: Colors.white54),
+                icon: Icon(Icons.close, color: context.colors.textSecondary),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text('寄件人：${_InboxRow._senderName(m)}',
-              style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              style: TextStyle(color: context.colors.textTertiary, fontSize: 12)),
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF111111),
+              color: context.colors.surfaceAlt,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(body,
-                style: const TextStyle(color: Colors.white70, height: 1.5)),
+                style: TextStyle(color: context.colors.textSecondary, height: 1.5)),
           ),
           const SizedBox(height: 20),
           if (existingReply != null && existingReply.isNotEmpty) ...[
@@ -277,19 +279,19 @@ class _MessageDetailState extends ConsumerState<_MessageDetail> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(existingReply,
-                  style: const TextStyle(color: Colors.white70, height: 1.5)),
+                  style: TextStyle(color: context.colors.textSecondary, height: 1.5)),
             ),
           ] else ...[
             TextField(
               controller: _replyController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: context.colors.textPrimary),
               maxLines: 4,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '撰寫回覆...',
-                hintStyle: TextStyle(color: Colors.white38),
+                hintStyle: TextStyle(color: context.colors.textTertiary),
                 enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white12)),
-                focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: context.colors.divider)),
+                focusedBorder: const OutlineInputBorder(
                     borderSide: BorderSide(color: adminAccent)),
               ),
             ),

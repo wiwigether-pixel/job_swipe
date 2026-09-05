@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/admin_provider.dart';
 import 'widgets/admin_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 class AdminReportsScreen extends ConsumerStatefulWidget {
   const AdminReportsScreen({super.key});
@@ -43,13 +44,13 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                   child: Text('載入失敗：$e',
                       style: const TextStyle(color: Colors.redAccent))),
               data: (reports) => reports.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('沒有符合的檢舉',
-                          style: TextStyle(color: Colors.white38)))
+                          style: TextStyle(color: context.colors.textTertiary)))
                   : ListView.separated(
                       itemCount: reports.length,
                       separatorBuilder: (_, __) =>
-                          const Divider(color: Colors.white10, height: 1),
+                          Divider(color: context.colors.divider, height: 1),
                       itemBuilder: (_, i) => _ReportRow(report: reports[i]),
                     ),
             ),
@@ -76,11 +77,11 @@ class _StatusChip extends StatelessWidget {
         label: Text(label),
         selected: selected,
         onSelected: (_) => onTap(value),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.colors.surface,
         selectedColor: adminAccent.withValues(alpha: 0.25),
         labelStyle: TextStyle(
-            color: selected ? adminAccent : Colors.white54, fontSize: 13),
-        side: BorderSide(color: selected ? adminAccent : Colors.white12),
+            color: selected ? adminAccent : context.colors.textSecondary, fontSize: 13),
+        side: BorderSide(color: selected ? adminAccent : context.colors.divider),
       ),
     );
   }
@@ -112,6 +113,7 @@ class _ReportRow extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Neutral type badge — Colors.white24 is semantic for "neutral/unclassified"
               _Badge(_typeLabel(type), Colors.white24),
               const SizedBox(width: 12),
               Expanded(
@@ -119,24 +121,25 @@ class _ReportRow extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(reason,
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            color: context.colors.textPrimary, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 2),
                     Text('檢舉人：$reporterName',
-                        style: const TextStyle(
-                            color: Colors.white38, fontSize: 12)),
+                        style: TextStyle(
+                            color: context.colors.textTertiary, fontSize: 12)),
                     if (note != null && note.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text('備註：$note',
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 12)),
+                            style: TextStyle(
+                                color: context.colors.textSecondary, fontSize: 12)),
                       ),
                   ],
                 ),
               ),
               if (!isPending) ...[
                 const SizedBox(width: 8),
+                // Status badge: green=resolved, white38=dismissed (semantic dim)
                 _Badge(status == 'resolved' ? '已處理' : '已駁回',
                     status == 'resolved'
                         ? const Color(0xFF0CBB78)
@@ -169,8 +172,8 @@ class _ReportRow extends ConsumerWidget {
                     TextButton(
                       onPressed: () =>
                           _showResolve(context, ref, id, resolve: false),
-                      child: const Text('駁回',
-                          style: TextStyle(color: Colors.white38)),
+                      child: Text('駁回',
+                          style: TextStyle(color: context.colors.textTertiary)),
                     ),
                   ],
                 ],
@@ -193,7 +196,7 @@ class _ReportRow extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.colors.surface,
         child: SizedBox(
           width: size.width < 560 ? size.width - 48 : 520,
           height: size.height * 0.7,
@@ -209,19 +212,19 @@ class _ReportRow extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: ctx.colors.surface,
         title: Text(resolve ? '標記為已處理' : '駁回檢舉',
-            style: const TextStyle(color: Colors.white)),
+            style: TextStyle(color: ctx.colors.textPrimary)),
         content: TextField(
           controller: noteController,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: ctx.colors.textPrimary),
           maxLines: 3,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: '備註（選填）',
-            hintStyle: TextStyle(color: Colors.white38),
+            hintStyle: TextStyle(color: ctx.colors.textTertiary),
             enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.white12)),
-            focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: ctx.colors.divider)),
+            focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(color: adminAccent)),
           ),
         ),
@@ -229,9 +232,10 @@ class _ReportRow extends ConsumerWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child:
-                  const Text('取消', style: TextStyle(color: Colors.white54))),
+                  Text('取消', style: TextStyle(color: ctx.colors.textSecondary))),
           FilledButton(
             style: FilledButton.styleFrom(
+                // Resolve button: green=confirm, white24=dismiss (semantic action color)
                 backgroundColor:
                     resolve ? const Color(0xFF0CBB78) : Colors.white24),
             onPressed: () {
@@ -265,20 +269,20 @@ class _ConversationView extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              const Text('對話內容',
+              Text('對話內容',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600)),
               const Spacer(),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: Colors.white54),
+                icon: Icon(Icons.close, color: context.colors.textSecondary),
               ),
             ],
           ),
         ),
-        const Divider(color: Colors.white10, height: 1),
+        Divider(color: context.colors.divider, height: 1),
         Expanded(
           child: msgsAsync.when(
             loading: () => const Center(
@@ -287,9 +291,9 @@ class _ConversationView extends ConsumerWidget {
                 child: Text('載入失敗：$e',
                     style: const TextStyle(color: Colors.redAccent))),
             data: (msgs) => msgs.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('沒有訊息',
-                        style: TextStyle(color: Colors.white38)))
+                        style: TextStyle(color: context.colors.textTertiary)))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: msgs.length,
@@ -309,8 +313,7 @@ class _ConversationView extends ConsumerWidget {
                                     color: adminAccent, fontSize: 12)),
                             const SizedBox(height: 2),
                             Text(content,
-                                style:
-                                    const TextStyle(color: Colors.white70)),
+                                style: TextStyle(color: context.colors.textSecondary)),
                           ],
                         ),
                       );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/admin_provider.dart';
 import 'widgets/admin_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -71,7 +72,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
@@ -91,15 +92,15 @@ class _StatCard extends StatelessWidget {
               ),
               const Spacer(),
               Text('$value',
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 28,
                       fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 10),
           Text(label,
-              style: const TextStyle(color: Colors.white54, fontSize: 13)),
+              style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
         ],
       ),
     );
