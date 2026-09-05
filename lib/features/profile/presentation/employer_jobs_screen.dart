@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
+import '../../../core/utils/user_hydration.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────
 
@@ -474,17 +475,21 @@ class _JobApplicantsState extends State<_JobApplicants> {
     try {
       final data = await Supabase.instance.client
           .from('matches')
-          .select('''
-            id,
-            job_seeker:users!matches_job_seeker_id_fkey (
-              id, display_name, avatar_url, skills
-            )
-          ''')
+          .select('id, job_seeker_id')
           .eq('job_id', widget.jobId)
           .eq('status', 'pending');
 
+      final rows = (data as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+      final usersMap = await fetchPublicUsersMap(
+          rows.map((r) => r['job_seeker_id'] as String).toList());
+      for (final r in rows) {
+        r['job_seeker'] = usersMap[r['job_seeker_id']];
+      }
+
       setState(() {
-        _applicants = List<Map<String, dynamic>>.from(data as List);
+        _applicants = rows;
         _loaded = true;
         _loading = false;
       });
