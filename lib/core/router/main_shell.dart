@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../shared/models/user_model.dart';
 import '../../features/admin/data/admin_provider.dart';
 import '../providers/current_role_provider.dart';
+import '../theme/app_colors.dart';
 
 import '../router/app_router.dart';
 
@@ -65,7 +66,7 @@ class _MainShellState extends ConsumerState<MainShell>
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       body: widget.child,
       bottomNavigationBar: _CyberpunkNavBar(
         selectedIndex: selectedIndex,
@@ -98,7 +99,7 @@ class _CyberpunkNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0A0A0A),
+        color: context.colors.surfaceAlt,
         border: Border(
           top: BorderSide(color: themeColor.withValues(alpha: 0.3), width: 1),
         ),
@@ -132,7 +133,7 @@ class _CyberpunkNavBar extends StatelessWidget {
                           child: Icon(
                             isSelected ? activeIcon : inactiveIcon,
                             key: ValueKey(isSelected),
-                            color: isSelected ? themeColor : Colors.white24,
+                            color: isSelected ? themeColor : context.colors.textTertiary,
                             size: isSelected ? 26 : 22,
                           ),
                         ),
@@ -144,7 +145,7 @@ class _CyberpunkNavBar extends StatelessWidget {
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
-                            color: isSelected ? themeColor : Colors.white24,
+                            color: isSelected ? themeColor : context.colors.textTertiary,
                           ),
                           child: Text(label),
                         ),
@@ -242,9 +243,9 @@ class _RolePickerSheet extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF111111),
+            color: context.colors.surfaceAlt,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: context.colors.divider),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -254,23 +255,23 @@ class _RolePickerSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: context.colors.textTertiary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 '切換身份模式',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 '不同模式將顯示不同的推薦內容',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(color: context.colors.textTertiary, fontSize: 13),
               ),
               const SizedBox(height: 20),
               ...AppRole.values.map((role) {
@@ -345,11 +346,11 @@ class _AdminOption extends StatelessWidget {
               child: const Icon(Icons.shield_outlined, color: _accent, size: 22),
             ),
             const SizedBox(width: 16),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     '管理後台',
                     style: TextStyle(
                       color: _accent,
@@ -357,10 +358,10 @@ class _AdminOption extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     '審核用戶、職缺與檢舉',
-                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                    style: TextStyle(color: context.colors.textTertiary, fontSize: 12),
                   ),
                 ],
               ),
@@ -405,7 +406,7 @@ class _RoleOption extends StatelessWidget {
               ? role.themeColor.withValues(alpha: 0.15)
               : Colors.white.withValues(alpha: 0.04),
           border: Border.all(
-            color: isSelected ? role.themeColor : Colors.white12,
+            color: isSelected ? role.themeColor : context.colors.divider,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -428,7 +429,7 @@ class _RoleOption extends StatelessWidget {
                   Text(
                     role.label,
                     style: TextStyle(
-                      color: isSelected ? role.themeColor : Colors.white,
+                      color: isSelected ? role.themeColor : context.colors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
@@ -436,7 +437,7 @@ class _RoleOption extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _description,
-                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                    style: TextStyle(color: context.colors.textTertiary, fontSize: 12),
                   ),
                 ],
               ),

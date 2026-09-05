@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/error/app_exception.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../core/theme/app_colors.dart';
 import 'auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -72,7 +73,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           final message =
               error is AppException ? error.message : '註冊失敗，請稍後再試';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.red),
+            SnackBar(content: Text(message), backgroundColor: context.colors.danger),
           );
         }
       },
