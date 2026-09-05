@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'core/providers/theme_mode_provider.dart';
 
 /// App 根 Widget
 /// 使用 ConsumerWidget 讓它能讀取 Riverpod Provider
@@ -14,10 +16,9 @@ class JobSwipeApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'JobSwipe',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C63FF)),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeSettingProvider),
       routerConfig: router,
       // 【防崩潰】Widget 層級的錯誤邊界（Builder 模式）
       builder: (context, child) {
