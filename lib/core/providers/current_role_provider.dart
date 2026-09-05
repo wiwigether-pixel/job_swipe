@@ -16,7 +16,7 @@ class CurrentRole extends _$CurrentRole {
 
     if (!_manuallySet) {
       // users.role 就是當前身份，直接讀
-      // profileProvider stream 更新後這裡自動跟著變
+      // profileProvider 被 invalidate 重抓後這裡自動跟著變
       return profileAsync.valueOrNull?.effectiveRole ?? AppRole.jobSeeker;
     }
     return state;
