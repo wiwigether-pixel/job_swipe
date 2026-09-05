@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/theme/app_colors.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -128,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() => _messages.removeWhere((m) => m['id'] == tempId));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('發送失敗'), backgroundColor: Colors.red),
+        SnackBar(content: const Text('發送失敗'), backgroundColor: context.colors.danger),
       );
     }
   }
@@ -139,19 +140,19 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (ctx) {
         final controller = TextEditingController();
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
-          title: const Text('檢舉對話', style: TextStyle(color: Colors.white)),
+          backgroundColor: ctx.colors.surface,
+          title: Text('檢舉對話', style: TextStyle(color: ctx.colors.textPrimary)),
           content: TextField(
             controller: controller,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: ctx.colors.textPrimary),
             maxLines: 3,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '請描述檢舉原因...',
-              hintStyle: TextStyle(color: Colors.white38),
+              hintStyle: TextStyle(color: ctx.colors.textTertiary),
               enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white12)),
-              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: ctx.colors.divider)),
+              focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: Color(0xFF6C63FF))),
             ),
           ),
@@ -159,7 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child:
-                    const Text('取消', style: TextStyle(color: Colors.white54))),
+                    Text('取消', style: TextStyle(color: ctx.colors.textSecondary))),
             FilledButton(
               style:
                   FilledButton.styleFrom(backgroundColor: const Color(0xFF6C63FF)),
@@ -190,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('檢舉失敗'), backgroundColor: Colors.red),
+        SnackBar(content: const Text('檢舉失敗'), backgroundColor: context.colors.danger),
       );
     }
   }
@@ -200,18 +201,18 @@ class _ChatScreenState extends State<ChatScreen> {
     final myId = _client.auth.currentUser?.id ?? '';
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: context.colors.surfaceAlt,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_new, color: context.colors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           widget.otherName,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -219,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             tooltip: '檢舉',
-            icon: const Icon(Icons.flag_outlined, color: Colors.white54),
+            icon: Icon(Icons.flag_outlined, color: context.colors.textSecondary),
             onPressed: _reportConversation,
           ),
         ],
@@ -230,10 +231,10 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Expanded(
                   child: _messages.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             '傳送第一則訊息開始聊天吧！',
-                            style: TextStyle(color: Colors.white38, fontSize: 15),
+                            style: TextStyle(color: context.colors.textTertiary, fontSize: 15),
                           ),
                         )
                       : ListView.builder(
@@ -282,7 +283,7 @@ class _MessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isMe
               ? const Color(0xFF6C63FF)
-              : const Color(0xFF1E1E1E),
+              : context.colors.surface,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -292,8 +293,10 @@ class _MessageBubble extends StatelessWidget {
         ),
         child: Text(
           content,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 15, height: 1.4),
+          style: TextStyle(
+              color: isMe ? Colors.white : context.colors.textPrimary,
+              fontSize: 15,
+              height: 1.4),
         ),
       ),
     );
@@ -313,24 +316,24 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0A0A),
-        border: Border(top: BorderSide(color: Colors.white12)),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceAlt,
+        border: Border(top: BorderSide(color: context.colors.divider)),
       ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: controller,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: context.colors.textPrimary),
               maxLines: null,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(
                 hintText: '傳送訊息...',
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: TextStyle(color: context.colors.textTertiary),
                 filled: true,
-                fillColor: const Color(0xFF1A1A1A),
+                fillColor: context.colors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(

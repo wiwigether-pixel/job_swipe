@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/user_hydration.dart';
 import '../../../shared/models/user_model.dart';
 
@@ -86,7 +87,7 @@ class MessagesScreen extends ConsumerWidget {
     final chatsAsync = ref.watch(matchedChatsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -118,7 +119,7 @@ class MessagesScreen extends ConsumerWidget {
             Center(child: CircularProgressIndicator(color: themeColor)),
         error: (e, _) => Center(
           child: Text(e.toString(),
-              style: const TextStyle(color: Colors.white38)),
+              style: TextStyle(color: context.colors.textTertiary)),
         ),
         data: (chats) {
           if (chats.isEmpty) {
@@ -221,7 +222,7 @@ class _ChatTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: const Color(0xFF00FF9F),
-                      border: Border.all(color: Colors.black, width: 2),
+                      border: Border.all(color: context.colors.background, width: 2),
                     ),
                   ),
                 ),
@@ -234,8 +235,8 @@ class _ChatTile extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
@@ -244,7 +245,7 @@ class _ChatTile extends StatelessWidget {
                   Text(
                     subtitle,
                     style:
-                        const TextStyle(color: Colors.white38, fontSize: 13),
+                        TextStyle(color: context.colors.textTertiary, fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -299,19 +300,19 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.chat_bubble_outline,
               size: 80, color: themeColor.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             '還沒有配對成功的聊天',
             style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white),
+                color: context.colors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             role == AppRole.jobSeeker
                 ? '右滑職缺並等待雇主確認後就能聊天'
                 : '在配對清單確認求職者後就能開啟聊天',
-            style: const TextStyle(color: Colors.white38),
+            style: TextStyle(color: context.colors.textTertiary),
             textAlign: TextAlign.center,
           ),
         ],

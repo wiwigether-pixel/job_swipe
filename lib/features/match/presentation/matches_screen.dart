@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/user_hydration.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/models/user_card_model.dart';
@@ -111,7 +112,7 @@ class MatchesScreen extends ConsumerWidget {
     final matchesAsync = ref.watch(pendingMatchesProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -382,7 +383,7 @@ class _EmployerSwipeConfirmState
             children: [
               _CircleBtn(
                 icon: Icons.close,
-                color: const Color(0xFFFF4757),
+                color: context.colors.danger,
                 size: 64,
                 onPressed: () => _controller.swipeLeft(),
               ),
@@ -421,7 +422,7 @@ class _CircleBtn extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF111111),
+          color: context.colors.surfaceAlt,
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
           boxShadow: [
             BoxShadow(
@@ -465,7 +466,7 @@ class _JobSeekerMatchList extends StatelessWidget {
             border: Border.all(
               color: isMatched
                   ? themeColor.withValues(alpha: 0.5)
-                  : Colors.white12,
+                  : context.colors.divider,
             ),
           ),
           child: Row(
@@ -493,8 +494,8 @@ class _JobSeekerMatchList extends StatelessWidget {
                   children: [
                     Text(
                       job?['title'] as String? ?? '未命名職缺',
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold),
                     ),
@@ -503,8 +504,8 @@ class _JobSeekerMatchList extends StatelessWidget {
                       employer?['company_name'] as String? ??
                           employer?['display_name'] as String? ??
                           '未知公司',
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 13),
+                      style: TextStyle(
+                          color: context.colors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -560,15 +561,15 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             isEmployer ? '目前沒有待確認的求職者' : '還沒有配對',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white),
+                color: context.colors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             isEmployer ? '當求職者右滑你的職缺時，會出現在這裡讓你確認' : '右滑喜歡的職缺來建立配對',
-            style: const TextStyle(color: Colors.white38),
+            style: TextStyle(color: context.colors.textTertiary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -592,10 +593,10 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.white38),
+          Icon(Icons.error_outline, size: 48, color: context.colors.textTertiary),
           const SizedBox(height: 12),
           Text(message,
-              style: const TextStyle(color: Colors.white38),
+              style: TextStyle(color: context.colors.textTertiary),
               textAlign: TextAlign.center),
           const SizedBox(height: 16),
           ElevatedButton(onPressed: onRetry, child: const Text('重試')),
