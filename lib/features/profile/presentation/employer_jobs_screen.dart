@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 
@@ -9,6 +10,23 @@ final employerJobsProvider =
     AsyncNotifierProvider<EmployerJobsNotifier, List<Map<String, dynamic>>>(
   EmployerJobsNotifier.new,
 );
+
+/// 目前可用的免費刊登額度。額度用完即無法刊登，需參加行銷活動解鎖。
+final freeJobQuotaProvider = FutureProvider<int>((ref) async {
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return 0;
+  final row = await Supabase.instance.client
+      .from('users')
+      .select('free_job_quota')
+      .eq('id', user.id)
+      .single();
+  return (row['free_job_quota'] as int?) ?? 0;
+});
+
+/// 刊登額度不足時拋出，UI 端攔截後引導至行銷活動。
+class JobQuotaExceeded implements Exception {
+  const JobQuotaExceeded();
+}
 
 class EmployerJobsNotifier
     extends AsyncNotifier<List<Map<String, dynamic>>> {
@@ -34,6 +52,10 @@ class EmployerJobsNotifier
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
+    // 先原子扣除一個刊登額度；額度不足即擋下並引導至活動。
+    final ok = await Supabase.instance.client.rpc('consume_job_quota');
+    if (ok != true) throw const JobQuotaExceeded();
+
     await Supabase.instance.client.from('jobs').insert({
       ...jobData,
       'employer_id': user.id,
@@ -43,6 +65,7 @@ class EmployerJobsNotifier
     });
 
     ref.invalidateSelf();
+    ref.invalidate(freeJobQuotaProvider);
   }
 
   Future<void> updateJob(String jobId, Map<String, dynamic> jobData) async {
@@ -76,11 +99,77 @@ class EmployerJobsNotifier
 
 // ── Screen ────────────────────────────────────────────────────────────────
 
-class EmployerJobsScreen extends ConsumerWidget {
-  const EmployerJobsScreen({super.key});
+class EmployerJobsScreen extends ConsumerStatefulWidget {
+  const EmployerJobsScreen({super.key, this.autoOpenCreate = false});
+
+  /// 從行銷活動「免費刊登職缺」進來時，自動彈出新增職缺表單。
+  final bool autoOpenCreate;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmployerJobsScreen> createState() =>
+      _EmployerJobsScreenState();
+}
+
+class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoOpenCreate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _onAddPressed(ref.read(currentRoleProvider).themeColor);
+      });
+    }
+  }
+
+  /// 點擊新增前先檢查免費刊登額度，額度用完就擋下並引導去參加活動。
+  Future<void> _onAddPressed(Color themeColor) async {
+    final quota = await ref.read(freeJobQuotaProvider.future);
+    if (!mounted) return;
+    if (quota <= 0) {
+      _showQuotaDialog(themeColor);
+    } else {
+      _showJobSheet(context, ref, themeColor);
+    }
+  }
+
+  void _showQuotaDialog(Color themeColor) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF111111),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: const Text('免費刊登額度已用完',
+            style: TextStyle(color: Colors.white)),
+        content: const Text(
+          '你的免費刊登額度已用完。參加限時活動即可解鎖更多免費刊登名額。',
+          style: TextStyle(color: Colors.white54),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('稍後',
+                style: TextStyle(color: Colors.white38)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: themeColor, foregroundColor: Colors.black),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.push('/campaign');
+            },
+            child: const Text('前往活動'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeColor = ref.watch(currentRoleProvider).themeColor;
     final jobsAsync = ref.watch(employerJobsProvider);
 
@@ -100,7 +189,7 @@ class EmployerJobsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.add_circle_outline, color: themeColor),
-            onPressed: () => _showJobSheet(context, ref, themeColor),
+            onPressed: () => _onAddPressed(themeColor),
           ),
         ],
       ),
@@ -127,7 +216,7 @@ class EmployerJobsScreen extends ConsumerWidget {
         data: (jobs) => jobs.isEmpty
             ? _EmptyState(
                 themeColor: themeColor,
-                onAdd: () => _showJobSheet(context, ref, themeColor),
+                onAdd: () => _onAddPressed(themeColor),
               )
             : ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -151,7 +240,7 @@ class EmployerJobsScreen extends ConsumerWidget {
       floatingActionButton: jobsAsync.hasValue &&
               (jobsAsync.value?.isNotEmpty ?? false)
           ? FloatingActionButton(
-              onPressed: () => _showJobSheet(context, ref, themeColor),
+              onPressed: () => _onAddPressed(themeColor),
               backgroundColor: themeColor,
               foregroundColor: Colors.black,
               child: const Icon(Icons.add),
@@ -678,6 +767,15 @@ class _JobFormSheetState extends State<_JobFormSheet> {
                 widget.job != null ? '✅ 職缺已更新' : '✅ 職缺已發布'),
             backgroundColor: widget.themeColor.withValues(alpha: 0.8),
           ),
+        );
+      }
+    } on JobQuotaExceeded {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('免費刊登額度已用完，請參加活動解鎖'),
+              backgroundColor: Colors.redAccent),
         );
       }
     } catch (e) {

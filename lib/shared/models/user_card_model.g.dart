@@ -18,7 +18,6 @@ _$UserCardModelImpl _$$UserCardModelImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      expectedSalary: (json['expectedSalary'] as num?)?.toInt(),
       companyName: json['companyName'] as String?,
       companySize: json['companySize'] as String?,
       isOpenToOpportunity: json['isOpenToOpportunity'] as bool? ?? true,
@@ -34,7 +33,6 @@ Map<String, dynamic> _$$UserCardModelImplToJson(_$UserCardModelImpl instance) =>
       'avatarUrl': instance.avatarUrl,
       'bio': instance.bio,
       'skills': instance.skills,
-      'expectedSalary': instance.expectedSalary,
       'companyName': instance.companyName,
       'companySize': instance.companySize,
       'isOpenToOpportunity': instance.isOpenToOpportunity,

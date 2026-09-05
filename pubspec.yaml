@@ -24,6 +24,11 @@ dependencies:
   image_picker: ^1.2.1
   slang_flutter: ^3.26.0
   js: ^0.7.2
+  webview_flutter: ^4.7.0
+  # Firebase iOS SDK 11.x 需要 Xcode 16；本機為 Xcode 15.3，固定在 10.x 線
+  # 升級 Xcode/macOS 後可改回 ^3.x / ^11.x（AppAnalytics 程式碼不需改）
+  firebase_core: 2.32.0
+  firebase_analytics: 10.10.7
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +45,4 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/marketing/campaign.html

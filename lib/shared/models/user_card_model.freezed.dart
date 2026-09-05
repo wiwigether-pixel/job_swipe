@@ -28,7 +28,6 @@ mixin _$UserCardModel {
   String? get avatarUrl => throw _privateConstructorUsedError;
   String? get bio => throw _privateConstructorUsedError;
   List<String> get skills => throw _privateConstructorUsedError;
-  int? get expectedSalary => throw _privateConstructorUsedError;
   String? get companyName => throw _privateConstructorUsedError;
   String? get companySize => throw _privateConstructorUsedError;
   bool get isOpenToOpportunity => throw _privateConstructorUsedError;
@@ -54,7 +53,6 @@ abstract class $UserCardModelCopyWith<$Res> {
       String? avatarUrl,
       String? bio,
       List<String> skills,
-      int? expectedSalary,
       String? companyName,
       String? companySize,
       bool isOpenToOpportunity,
@@ -81,7 +79,6 @@ class _$UserCardModelCopyWithImpl<$Res, $Val extends UserCardModel>
     Object? avatarUrl = freezed,
     Object? bio = freezed,
     Object? skills = null,
-    Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
     Object? isOpenToOpportunity = null,
@@ -116,10 +113,6 @@ class _$UserCardModelCopyWithImpl<$Res, $Val extends UserCardModel>
           ? _value.skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      expectedSalary: freezed == expectedSalary
-          ? _value.expectedSalary
-          : expectedSalary // ignore: cast_nullable_to_non_nullable
-              as int?,
       companyName: freezed == companyName
           ? _value.companyName
           : companyName // ignore: cast_nullable_to_non_nullable
@@ -156,7 +149,6 @@ abstract class _$$UserCardModelImplCopyWith<$Res>
       String? avatarUrl,
       String? bio,
       List<String> skills,
-      int? expectedSalary,
       String? companyName,
       String? companySize,
       bool isOpenToOpportunity,
@@ -181,7 +173,6 @@ class __$$UserCardModelImplCopyWithImpl<$Res>
     Object? avatarUrl = freezed,
     Object? bio = freezed,
     Object? skills = null,
-    Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
     Object? isOpenToOpportunity = null,
@@ -216,10 +207,6 @@ class __$$UserCardModelImplCopyWithImpl<$Res>
           ? _value._skills
           : skills // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      expectedSalary: freezed == expectedSalary
-          ? _value.expectedSalary
-          : expectedSalary // ignore: cast_nullable_to_non_nullable
-              as int?,
       companyName: freezed == companyName
           ? _value.companyName
           : companyName // ignore: cast_nullable_to_non_nullable
@@ -251,7 +238,6 @@ class _$UserCardModelImpl implements _UserCardModel {
       this.avatarUrl,
       this.bio,
       final List<String> skills = const [],
-      this.expectedSalary,
       this.companyName,
       this.companySize,
       this.isOpenToOpportunity = true,
@@ -286,8 +272,6 @@ class _$UserCardModelImpl implements _UserCardModel {
   }
 
   @override
-  final int? expectedSalary;
-  @override
   final String? companyName;
   @override
   final String? companySize;
@@ -300,7 +284,7 @@ class _$UserCardModelImpl implements _UserCardModel {
 
   @override
   String toString() {
-    return 'UserCardModel(id: $id, userId: $userId, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, skills: $skills, expectedSalary: $expectedSalary, companyName: $companyName, companySize: $companySize, isOpenToOpportunity: $isOpenToOpportunity, isOpenToExchange: $isOpenToExchange)';
+    return 'UserCardModel(id: $id, userId: $userId, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, skills: $skills, companyName: $companyName, companySize: $companySize, isOpenToOpportunity: $isOpenToOpportunity, isOpenToExchange: $isOpenToExchange)';
   }
 
   @override
@@ -317,8 +301,6 @@ class _$UserCardModelImpl implements _UserCardModel {
                 other.avatarUrl == avatarUrl) &&
             (identical(other.bio, bio) || other.bio == bio) &&
             const DeepCollectionEquality().equals(other._skills, _skills) &&
-            (identical(other.expectedSalary, expectedSalary) ||
-                other.expectedSalary == expectedSalary) &&
             (identical(other.companyName, companyName) ||
                 other.companyName == companyName) &&
             (identical(other.companySize, companySize) ||
@@ -340,7 +322,6 @@ class _$UserCardModelImpl implements _UserCardModel {
       avatarUrl,
       bio,
       const DeepCollectionEquality().hash(_skills),
-      expectedSalary,
       companyName,
       companySize,
       isOpenToOpportunity,
@@ -369,7 +350,6 @@ abstract class _UserCardModel implements UserCardModel {
       final String? avatarUrl,
       final String? bio,
       final List<String> skills,
-      final int? expectedSalary,
       final String? companyName,
       final String? companySize,
       final bool isOpenToOpportunity,
@@ -392,8 +372,6 @@ abstract class _UserCardModel implements UserCardModel {
   String? get bio;
   @override
   List<String> get skills;
-  @override
-  int? get expectedSalary;
   @override
   String? get companyName;
   @override

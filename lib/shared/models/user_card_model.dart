@@ -16,7 +16,6 @@ class UserCardModel with _$UserCardModel {
     String? avatarUrl,
     String? bio,
     @Default([]) List<String> skills,
-    int? expectedSalary,
     String? companyName,
     String? companySize,
     @Default(true) bool isOpenToOpportunity,
@@ -38,7 +37,6 @@ class UserCardModel with _$UserCardModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      expectedSalary: row['expected_salary'] as int?,
       companyName: row['company_name'] as String?,
       companySize: row['company_size'] as String?,
       isOpenToOpportunity: row['is_open_to_opportunity'] as bool? ?? true,

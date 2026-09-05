@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
@@ -56,7 +57,7 @@ class PendingMatchesNotifier
             )
           ''')
           .eq('job_seeker_id', user.id)
-          .inFilter('status', ['pending', 'matched'])
+          .inFilter('status', ['pending', 'accepted'])
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(data as List);
     }
@@ -219,6 +220,7 @@ class _EmployerSwipeConfirmState
   }
 
   void _showMatchedDialog(Map<String, dynamic> match) {
+    final matchId = match['id'] as String;
     final js = match['job_seeker'] as Map<String, dynamic>? ?? {};
     final job = match['jobs'] as Map<String, dynamic>? ?? {};
     final name = js['display_name'] as String? ?? '求職者';
@@ -289,7 +291,12 @@ class _EmployerSwipeConfirmState
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            if (mounted) {
+                              context.push('/chat/$matchId', extra: name);
+                            }
+                          },
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFFBF00FF),

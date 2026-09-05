@@ -22,7 +22,7 @@ UserModel _$UserModelFromJson(Map<String, dynamic> json) {
 mixin _$UserModel {
   String get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
-  UserRole get role => throw _privateConstructorUsedError; // ← 這就是當前身份，直接更新它
+  UserRole get role => throw _privateConstructorUsedError; // 當前身份
   String get displayName => throw _privateConstructorUsedError;
   String? get avatarUrl => throw _privateConstructorUsedError;
   String? get bio => throw _privateConstructorUsedError;
@@ -32,6 +32,7 @@ mixin _$UserModel {
   int? get expectedSalary => throw _privateConstructorUsedError;
   String? get companyName => throw _privateConstructorUsedError;
   String? get companySize => throw _privateConstructorUsedError;
+  String get salaryVisibility => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
@@ -59,6 +60,7 @@ abstract class $UserModelCopyWith<$Res> {
       int? expectedSalary,
       String? companyName,
       String? companySize,
+      String salaryVisibility,
       DateTime createdAt,
       DateTime updatedAt});
 }
@@ -88,6 +90,7 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
     Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
+    Object? salaryVisibility = null,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -140,6 +143,10 @@ class _$UserModelCopyWithImpl<$Res, $Val extends UserModel>
           ? _value.companySize
           : companySize // ignore: cast_nullable_to_non_nullable
               as String?,
+      salaryVisibility: null == salaryVisibility
+          ? _value.salaryVisibility
+          : salaryVisibility // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -173,6 +180,7 @@ abstract class _$$UserModelImplCopyWith<$Res>
       int? expectedSalary,
       String? companyName,
       String? companySize,
+      String salaryVisibility,
       DateTime createdAt,
       DateTime updatedAt});
 }
@@ -200,6 +208,7 @@ class __$$UserModelImplCopyWithImpl<$Res>
     Object? expectedSalary = freezed,
     Object? companyName = freezed,
     Object? companySize = freezed,
+    Object? salaryVisibility = null,
     Object? createdAt = null,
     Object? updatedAt = null,
   }) {
@@ -252,6 +261,10 @@ class __$$UserModelImplCopyWithImpl<$Res>
           ? _value.companySize
           : companySize // ignore: cast_nullable_to_non_nullable
               as String?,
+      salaryVisibility: null == salaryVisibility
+          ? _value.salaryVisibility
+          : salaryVisibility // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -280,6 +293,7 @@ class _$UserModelImpl extends _UserModel {
       this.expectedSalary,
       this.companyName,
       this.companySize,
+      this.salaryVisibility = 'matched',
       required this.createdAt,
       required this.updatedAt})
       : _skills = skills,
@@ -294,7 +308,7 @@ class _$UserModelImpl extends _UserModel {
   final String email;
   @override
   final UserRole role;
-// ← 這就是當前身份，直接更新它
+// 當前身份
   @override
   final String displayName;
   @override
@@ -321,13 +335,16 @@ class _$UserModelImpl extends _UserModel {
   @override
   final String? companySize;
   @override
+  @JsonKey()
+  final String salaryVisibility;
+  @override
   final DateTime createdAt;
   @override
   final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, location: $location, skills: $skills, experienceYears: $experienceYears, expectedSalary: $expectedSalary, companyName: $companyName, companySize: $companySize, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'UserModel(id: $id, email: $email, role: $role, displayName: $displayName, avatarUrl: $avatarUrl, bio: $bio, location: $location, skills: $skills, experienceYears: $experienceYears, expectedSalary: $expectedSalary, companyName: $companyName, companySize: $companySize, salaryVisibility: $salaryVisibility, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -354,6 +371,8 @@ class _$UserModelImpl extends _UserModel {
                 other.companyName == companyName) &&
             (identical(other.companySize, companySize) ||
                 other.companySize == companySize) &&
+            (identical(other.salaryVisibility, salaryVisibility) ||
+                other.salaryVisibility == salaryVisibility) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -376,6 +395,7 @@ class _$UserModelImpl extends _UserModel {
       expectedSalary,
       companyName,
       companySize,
+      salaryVisibility,
       createdAt,
       updatedAt);
 
@@ -407,6 +427,7 @@ abstract class _UserModel extends UserModel {
       final int? expectedSalary,
       final String? companyName,
       final String? companySize,
+      final String salaryVisibility,
       required final DateTime createdAt,
       required final DateTime updatedAt}) = _$UserModelImpl;
   const _UserModel._() : super._();
@@ -420,7 +441,7 @@ abstract class _UserModel extends UserModel {
   String get email;
   @override
   UserRole get role;
-  @override // ← 這就是當前身份，直接更新它
+  @override // 當前身份
   String get displayName;
   @override
   String? get avatarUrl;
@@ -438,6 +459,8 @@ abstract class _UserModel extends UserModel {
   String? get companyName;
   @override
   String? get companySize;
+  @override
+  String get salaryVisibility;
   @override
   DateTime get createdAt;
   @override

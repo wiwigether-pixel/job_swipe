@@ -30,8 +30,12 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       final isMatch = await ref
           .read(recommendedJobsProvider.notifier)
           .onSwipe(card: card, isLike: isLike);
-      if (isMatch && isLike && mounted && card.isJob) {
-        await showMatchDialog(context, job: card.job!);
+      if (isMatch && isLike && mounted) {
+        await showMatchDialog(
+          context,
+          job: card.isJob ? card.job : null,
+          userCard: card.isJob ? null : card.userCard,
+        );
       }
     } catch (e) {
       if (mounted) {

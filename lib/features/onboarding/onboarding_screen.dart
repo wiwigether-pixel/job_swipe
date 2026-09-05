@@ -7,10 +7,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'provider/onboarding_provider.dart';
 import '../welcome/connection_painter.dart';
 import 'package:job_swipe/core/utils/logger.dart';
+import 'package:job_swipe/core/providers/profile_provider.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   final String initialRole;
-  final bool isRoleSwitch; // true = 切換身份的 onboarding，存到 user_profiles
+  final bool isRoleSwitch; 
+
   const OnboardingScreen({
     super.key,
     required this.initialRole,
@@ -26,12 +28,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _skillController = TextEditingController();
-  // 雇主欄位
+  
+  // 雇主專屬欄位
   final _companyNameController = TextEditingController();
   final _jobDescController = TextEditingController();
   String _companySize = '1-10';
 
-  // 求職者欄位
+  // 求職者專屬欄位
   int? _expectedSalary;
   final _salaryController = TextEditingController();
 
@@ -42,17 +45,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   late AnimationController _animController;
 
-  // 根據 role 決定主題色
   Color get _themeColor => switch (widget.initialRole) {
         'employer' => Colors.purpleAccent,
         'peer' => Colors.tealAccent,
         _ => Colors.blueAccent,
       };
 
-  // 是否為雇主身份
   bool get _isEmployer => widget.initialRole == 'employer';
-
-  // 是否為同業交流
   bool get _isPeer => widget.initialRole == 'peer';
 
   @override
@@ -62,6 +61,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
+
+    // 預填已有的 profile 資料（避免用戶重複填寫）
+    final profile = ref.read(profileProvider).valueOrNull;
+    if (profile != null) {
+      if (profile.displayName.isNotEmpty && profile.displayName != '未命名') {
+        _nameController.text = profile.displayName;
+      }
+      if (profile.bio != null) _bioController.text = profile.bio!;
+      if (profile.companyName != null) {
+        _companyNameController.text = profile.companyName!;
+      }
+      if (profile.skills.isNotEmpty) {
+        _skills.addAll(profile.skills);
+      }
+    }
   }
 
   @override
@@ -91,55 +105,53 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Future<void> _submit() async {
-    // 切換身份的 onboarding 不需要頭像（沿用原本的）
-    if (!widget.isRoleSwitch && _imageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請上傳一張頭像照片')),
-      );
+    final name = _nameController.text.trim();
+    final companyName = _companyNameController.text.trim();
+
+    final existingProfile = ref.read(profileProvider).valueOrNull;
+    final hasExistingAvatar = existingProfile?.avatarUrl?.isNotEmpty == true;
+
+    // 1. 基礎驗證：已有頭像則不強制上傳新圖
+    if (!widget.isRoleSwitch && _imageFile == null && !hasExistingAvatar) {
+      _showError('請上傳一張頭像照片');
       return;
     }
-    if (_nameController.text.trim().isEmpty && !widget.isRoleSwitch) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請填寫真實姓名')),
-      );
+    if (name.isEmpty && !widget.isRoleSwitch && !hasExistingAvatar) {
+      _showError('請填寫真實姓名');
       return;
     }
 
-    // 雇主必填公司名稱
-    if (_isEmployer && _companyNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請填寫公司名稱')),
-      );
+    // 2. 雇主身份檢查：必填公司名稱
+    if (_isEmployer && companyName.isEmpty) {
+      _showError('身為雇主，請填寫公司名稱');
       return;
     }
 
     try {
       if (widget.isRoleSwitch) {
-        // 切換身份：只存到 user_profiles 表
+        // 純身份切換：寫入 user_profiles 表
         await _saveRoleProfile(widget.initialRole);
-      } else {
-        // 初始 onboarding：
-        // 1. 存到 users 表（頭像、姓名、bio、skills）
+      } else if (_imageFile != null) {
+        // 有新頭像：走完整流程
         await ref.read(onboardingNotifierProvider.notifier).submit(
               image: _imageFile!,
-              name: _nameController.text.trim(),
+              name: name,
               bio: _bioController.text.trim(),
               skills: _skills,
             );
-        // 2. 同時寫入 user_profiles，記錄這個身份已完成
-        // 之後切換身份再切回來不會再問一次
+        await _saveRoleProfile(widget.initialRole);
+      } else {
+        // 已有頭像，只需補齊缺少的欄位（如 company_name）
         await _saveRoleProfile(widget.initialRole);
       }
+
+      // 強制刷新 Profile 狀態，讓 GoRouter redirect 看到最新資料
+      ref.invalidate(profileProvider);
+      await ref.read(profileProvider.future);
+
       if (mounted) context.go('/swipe');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('提交失敗：$e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      _showError('提交失敗：$e');
     }
   }
 
@@ -147,9 +159,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) throw Exception('未登入');
 
-    final isEmployer = role == 'employer';
-    final isPeer = role == 'peer';
-
+    // 建立上傳資料 Map
     final data = <String, dynamic>{
       'user_id': user.id,
       'role': role,
@@ -163,24 +173,73 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       data['display_name'] = _nameController.text.trim();
     }
 
-    if (isEmployer) {
+    // 🚀 角色互斥處理邏輯：
+    // 當使用者變換角色時，清空不屬於該角色的欄位，避免 UserModel 判定邏輯混亂
+    if (role == 'employer') {
       data['company_name'] = _companyNameController.text.trim();
       data['company_size'] = _companySize;
       data['job_description'] = _jobDescController.text.trim();
-    }
-
-    if (!isEmployer && !isPeer) {
+      
+      // 雇主不應該有求職者欄位
+      data['expected_salary'] = null; 
+    } else if (role == 'peer') {
+      // 同業交流
+      data['company_name'] = null;
+      data['expected_salary'] = null;
+      data['company_size'] = null;
+    } else {
+      // 求職者
       data['expected_salary'] = _expectedSalary;
+      
+      // 求職者不應該有雇主欄位
+      data['company_name'] = null;
+      data['company_size'] = null;
+      data['job_description'] = null;
     }
 
-    logger.e('[Onboarding] 寫入 user_profiles: role=$role, '
-        'is_complete=true');
+    logger.d('[Onboarding] 執行 UPSERT user_profiles: $data');
 
     await Supabase.instance.client
         .from('user_profiles')
         .upsert(data, onConflict: 'user_id,role');
 
-    logger.e('[Onboarding] ✅ user_profiles 寫入成功');
+    // 同步更新 users 表的角色欄位，讓 profileProvider 能讀到最新資料
+    final usersUpdate = <String, dynamic>{
+      'role': role,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    if (role == 'employer') {
+      usersUpdate['company_name'] = _companyNameController.text.trim();
+      usersUpdate['company_size'] = _companySize;
+      usersUpdate['expected_salary'] = null;
+    } else if (role == 'job_seeker') {
+      usersUpdate['company_name'] = null;
+      usersUpdate['company_size'] = null;
+      usersUpdate['expected_salary'] = _expectedSalary;
+      usersUpdate['skills'] = _skills;
+    } else {
+      usersUpdate['company_name'] = null;
+      usersUpdate['company_size'] = null;
+      usersUpdate['expected_salary'] = null;
+    }
+
+    logger.d('[Onboarding] 同步更新 users: $usersUpdate');
+
+    await Supabase.instance.client
+        .from('users')
+        .update(usersUpdate)
+        .eq('id', user.id);
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -230,7 +289,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             ),
                           const SizedBox(height: 30),
 
-                          // 頭像（只在初始 onboarding 顯示）
+                          // 頭像（只在初始註冊時顯示）
                           if (!widget.isRoleSwitch) ...[
                             GestureDetector(
                               onTap: _pickImage,
@@ -274,7 +333,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             const SizedBox(height: 20),
                           ],
 
-                          // 個人簡介
                           _buildTextField(
                             _bioController,
                             _isEmployer ? '公司簡介（選填）' : '個人簡介（選填）',
@@ -283,7 +341,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           ),
                           const SizedBox(height: 20),
 
-                          // 雇主專用欄位
+                          // 🚀 雇主欄位
                           if (_isEmployer) ...[
                             _buildTextField(
                               _companyNameController,
@@ -308,7 +366,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             const SizedBox(height: 20),
                           ],
 
-                          // 求職者專用欄位
+                          // 🚀 求職者欄位
                           if (!_isEmployer && !_isPeer) ...[
                             TextField(
                               controller: _salaryController,
@@ -324,7 +382,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             const SizedBox(height: 20),
                           ],
 
-                          // 技能輸入（三種身份都有）
+                          // 技能輸入
                           TextField(
                             controller: _skillController,
                             onSubmitted: (val) {
@@ -373,6 +431,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
+                                elevation: 5,
                               ),
                               child: Text(
                                 widget.isRoleSwitch ? '完成設定' : '完成連線',
@@ -383,6 +442,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               ),
                             ),
                           ),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
@@ -438,7 +498,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     required void Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      initialValue: value,
+      value: value,
       dropdownColor: const Color(0xFF1A1A1A),
       style: const TextStyle(color: Colors.white),
       decoration: _inputStyle(label, Icons.people),

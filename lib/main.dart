@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 // 引入剛才建立的 logger
-import 'core/utils/logger.dart'; 
+import 'core/utils/logger.dart';
+import 'firebase_options.dart';
 import 'app.dart';
 
 Future<void> main() async {
@@ -27,11 +29,23 @@ Future<void> main() async {
     return true;
   };
 
+  await _initFirebase();
   await _initServices();
 
   runApp(
     const ProviderScope(child: JobSwipeApp()),
   );
+}
+
+Future<void> _initFirebase() async {
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    logger.i('✅ Firebase 初始化成功');
+  } catch (e) {
+    logger.e('❌ Firebase 初始化失敗: $e');
+  }
 }
 
 Future<void> _initServices() async {

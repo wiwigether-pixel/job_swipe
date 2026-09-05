@@ -94,7 +94,17 @@ class _ProfileBody extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _SkillsSection(skills: profile.skills, themeColor: themeColor),
               ],
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
+
+              // 開放交流開關（同業模式下顯示）
+              if (currentRole == AppRole.peer)
+                _OpenToExchangeTile(themeColor: themeColor),
+
+              // 開放機會開關（求職者模式下顯示）
+              if (currentRole == AppRole.jobSeeker)
+                _OpenToOpportunityTile(themeColor: themeColor),
+
+              const SizedBox(height: 12),
 
               // 雇主專區：只在雇主身份時顯示
               if (currentRole == AppRole.employer) ...[
@@ -116,6 +126,12 @@ class _ProfileBody extends ConsumerWidget {
 
               _SectionTitle(label: '帳號', themeColor: themeColor),
               const SizedBox(height: 12),
+              _ActionTile(
+                icon: Icons.local_fire_department_outlined,
+                label: '限時免費刊登職缺',
+                themeColor: const Color(0xFF6C63FF),
+                onTap: () => context.push('/campaign'),
+              ),
               _ActionTile(
                 icon: Icons.edit,
                 label: '編輯個人資料',
@@ -632,6 +648,206 @@ class _ActionTile extends StatelessWidget {
                 color: themeColor.withValues(alpha: 0.5), size: 18),
           ],
         ),
+      ),
+    );
+  }
+}
+// ── 開放同業交流開關 ──────────────────────────────────────────────────────
+
+class _OpenToExchangeTile extends ConsumerStatefulWidget {
+  const _OpenToExchangeTile({required this.themeColor});
+  final Color themeColor;
+
+  @override
+  ConsumerState<_OpenToExchangeTile> createState() =>
+      _OpenToExchangeTileState();
+}
+
+class _OpenToExchangeTileState extends ConsumerState<_OpenToExchangeTile> {
+  bool _isOpen = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    final data = await Supabase.instance.client
+        .from('user_profiles')
+        .select('is_open_to_exchange')
+        .eq('user_id', user.id)
+        .eq('role', 'peer')
+        .maybeSingle();
+    if (mounted) {
+      setState(() {
+        _isOpen = data?['is_open_to_exchange'] as bool? ?? true;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _isOpen = value);
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    await Supabase.instance.client
+        .from('user_profiles')
+        .update({'is_open_to_exchange': value})
+        .eq('user_id', user.id)
+        .eq('role', 'peer');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SizedBox.shrink();
+    return _ToggleTile(
+      icon: Icons.people_outline,
+      label: '開放同業交流',
+      subtitle: _isOpen ? '其他同業可以看到你的卡片' : '目前不接受同業聯絡',
+      value: _isOpen,
+      themeColor: widget.themeColor,
+      onChanged: _toggle,
+    );
+  }
+}
+
+// ── 開放求職機會開關 ──────────────────────────────────────────────────────
+
+class _OpenToOpportunityTile extends ConsumerStatefulWidget {
+  const _OpenToOpportunityTile({required this.themeColor});
+  final Color themeColor;
+
+  @override
+  ConsumerState<_OpenToOpportunityTile> createState() =>
+      _OpenToOpportunityTileState();
+}
+
+class _OpenToOpportunityTileState
+    extends ConsumerState<_OpenToOpportunityTile> {
+  bool _isOpen = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    final data = await Supabase.instance.client
+        .from('user_profiles')
+        .select('is_open_to_opportunity')
+        .eq('user_id', user.id)
+        .eq('role', 'job_seeker')
+        .maybeSingle();
+    if (mounted) {
+      setState(() {
+        _isOpen = data?['is_open_to_opportunity'] as bool? ?? true;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _isOpen = value);
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    await Supabase.instance.client
+        .from('user_profiles')
+        .update({'is_open_to_opportunity': value})
+        .eq('user_id', user.id)
+        .eq('role', 'job_seeker');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SizedBox.shrink();
+    return _ToggleTile(
+      icon: Icons.work_outline,
+      label: '開放求職機會',
+      subtitle: _isOpen ? '雇主可以在人才庫看到你' : '目前不接受新工作機會',
+      value: _isOpen,
+      themeColor: widget.themeColor,
+      onChanged: _toggle,
+    );
+  }
+}
+
+// ── 通用開關 Tile ─────────────────────────────────────────────────────────
+
+class _ToggleTile extends StatelessWidget {
+  const _ToggleTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.themeColor,
+    required this.onChanged,
+  });
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool value;
+  final Color themeColor;
+  final void Function(bool) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: value
+            ? themeColor.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.04),
+        border: Border.all(
+          color: value ? themeColor.withValues(alpha: 0.3) : Colors.white12,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: value ? themeColor : Colors.white38, size: 20),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: value ? Colors.white : Colors.white54,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: value
+                        ? themeColor.withValues(alpha: 0.7)
+                        : Colors.white24,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: themeColor,
+            activeTrackColor: themeColor.withValues(alpha: 0.3),
+            inactiveThumbColor: Colors.white24,
+            inactiveTrackColor: Colors.white10,
+          ),
+        ],
       ),
     );
   }

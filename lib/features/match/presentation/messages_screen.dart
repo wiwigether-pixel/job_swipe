@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/router/main_shell.dart';
@@ -36,7 +37,7 @@ class MatchedChatsNotifier
             )
           ''')
           .eq('job_seeker_id', user.id)
-          .eq('status', 'matched')
+          .eq('status', 'accepted')
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(data as List);
     } else {
@@ -50,7 +51,7 @@ class MatchedChatsNotifier
             jobs ( id, title )
           ''')
           .eq('employer_id', user.id)
-          .eq('status', 'matched')
+          .eq('status', 'accepted')
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(data as List);
     }
@@ -164,16 +165,7 @@ class _ChatTile extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: () {
-        // TODO: 進入聊天室（Phase 後期整合 Realtime）
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('即將開啟與 $name 的聊天室'),
-            backgroundColor: themeColor.withValues(alpha: 0.8),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
+      onTap: () => context.push('/chat/${match['id']}', extra: name),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),

@@ -23,6 +23,7 @@ _$UserModelImpl _$$UserModelImplFromJson(Map<String, dynamic> json) =>
       expectedSalary: (json['expectedSalary'] as num?)?.toInt(),
       companyName: json['companyName'] as String?,
       companySize: json['companySize'] as String?,
+      salaryVisibility: json['salaryVisibility'] as String? ?? 'matched',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -41,6 +42,7 @@ Map<String, dynamic> _$$UserModelImplToJson(_$UserModelImpl instance) =>
       'expectedSalary': instance.expectedSalary,
       'companyName': instance.companyName,
       'companySize': instance.companySize,
+      'salaryVisibility': instance.salaryVisibility,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
     };

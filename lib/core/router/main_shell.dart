@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/models/user_model.dart';
+import '../../features/admin/data/admin_provider.dart';
 import '../providers/current_role_provider.dart';
 
 import '../router/app_router.dart';
@@ -296,9 +297,77 @@ class _RolePickerSheet extends StatelessWidget {
                   },
                 );
               }),
+              // 管理員入口：僅管理員顯示，作為一種「身份模式」進入後台
+              if (ref.read(adminRoleProvider).valueOrNull != null)
+                _AdminOption(
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.go('/admin/dashboard');
+                  },
+                ),
               const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminOption extends StatelessWidget {
+  const _AdminOption({required this.onTap});
+
+  final VoidCallback onTap;
+
+  static const _accent = Color(0xFFFF6B35);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: _accent.withValues(alpha: 0.08),
+          border: Border.all(color: _accent.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _accent.withValues(alpha: 0.15),
+              ),
+              child: const Icon(Icons.shield_outlined, color: _accent, size: 22),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '管理後台',
+                    style: TextStyle(
+                      color: _accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '審核用戶、職缺與檢舉',
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right,
+                color: _accent.withValues(alpha: 0.6), size: 20),
+          ],
         ),
       ),
     );

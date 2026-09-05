@@ -1,37 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/models/job_model.dart';
+import '../../../shared/models/user_card_model.dart';
 
-/// 配對成功彈窗
-/// 使用 showGeneralDialog 而非 showDialog，可以自訂動畫
+/// 配對成功彈窗（支援 job 配對和 user 配對）
 Future<void> showMatchDialog(
   BuildContext context, {
-  required JobModel job,
+  JobModel? job,
+  UserCardModel? userCard,
 }) {
+  assert(job != null || userCard != null, '必須提供 job 或 userCard');
   return showGeneralDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: '關閉',
     barrierColor: Colors.black54,
     transitionDuration: const Duration(milliseconds: 400),
-    // 進場動畫：從小到大 + 淡入
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       return ScaleTransition(
-        scale: CurvedAnimation(
-          parent: animation,
-          curve: Curves.elasticOut,
-        ),
+        scale: CurvedAnimation(parent: animation, curve: Curves.elasticOut),
         child: FadeTransition(opacity: animation, child: child),
       );
     },
     pageBuilder: (context, animation, secondaryAnimation) {
-      return _MatchDialogContent(job: job);
+      return _MatchDialogContent(job: job, userCard: userCard);
     },
   );
 }
 
 class _MatchDialogContent extends StatelessWidget {
-  const _MatchDialogContent({required this.job});
-  final JobModel job;
+  const _MatchDialogContent({this.job, this.userCard});
+  final JobModel? job;
+  final UserCardModel? userCard;
+
+  String get _otherPartyLabel {
+    if (job != null) return (job!.companyName ?? '?').substring(0, 1).toUpperCase();
+    return (userCard!.displayName).substring(0, 1).toUpperCase();
+  }
+
+  String get _bodyText {
+    if (job != null) {
+      return '您對「${job!.title}」感興趣\n申請已送出，等待雇主確認後即可聊天！';
+    }
+    return '您與「${userCard!.displayName}」互相感興趣\n現在可以開始聊天了！';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +74,7 @@ class _MatchDialogContent extends StatelessWidget {
                     const SizedBox(width: 8),
                     const Icon(Icons.favorite, color: Colors.white, size: 32),
                     const SizedBox(width: 8),
-                    _Avatar(
-                      label: (job.companyName ?? '?')
-                          .substring(0, 1)
-                          .toUpperCase(),
-                    ),
+                    _Avatar(label: _otherPartyLabel),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -81,7 +89,7 @@ class _MatchDialogContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '您對「${job.title}」感興趣\n雇主將會收到您的申請通知',
+                  _bodyText,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
@@ -111,7 +119,10 @@ class _MatchDialogContent extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          context.go('/messages');
+                        },
                         style: FilledButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF6C63FF),
