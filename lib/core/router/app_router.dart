@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/swipe/presentation/swipe_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/match/presentation/messages_screen.dart';
@@ -36,6 +37,7 @@ abstract class AppRoutes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
   static const onboarding = '/onboarding';
   static const roleOnboarding = '/role-onboarding';
   static const swipe = '/swipe';
@@ -129,9 +131,12 @@ GoRouter appRouter(AppRouterRef ref) {
       final isLoggedIn = authRepository.currentUser != null;
 
       if (!isLoggedIn) {
-        final isAuthPage = location == AppRoutes.welcome || location == AppRoutes.login || location == AppRoutes.register;
+        final isAuthPage = location == AppRoutes.welcome || location == AppRoutes.login || location == AppRoutes.register || location == AppRoutes.forgotPassword;
         return isAuthPage ? null : AppRoutes.welcome;
       }
+
+      // verifyOTP 成功後已建立 session，豁免 onboarding 檢查
+      if (location == AppRoutes.forgotPassword) return null;
 
       // ── Admin 守衛 ──
       // 進入 /admin/* 需要是管理員；非管理員一律踢回 /swipe
@@ -176,6 +181,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(path: AppRoutes.welcome, builder: (_, __) => const WelcomeScreen()),
       GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(path: AppRoutes.register, builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, __) => const ForgotPasswordScreen(),
+      ),
       GoRoute(
         path: AppRoutes.onboarding,
         builder: (context, state) {

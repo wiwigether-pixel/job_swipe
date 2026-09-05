@@ -101,6 +101,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       validator: (v) =>
                           (v == null || v.length < 6) ? '密碼至少需要 6 碼' : null,
                     ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => context.push('/forgot-password'),
+                        child: const Text('忘記密碼？'),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: isLoading ? null : _handleLogin,
