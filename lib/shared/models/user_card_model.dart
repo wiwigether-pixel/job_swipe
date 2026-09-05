@@ -5,7 +5,7 @@ part 'user_card_model.freezed.dart';
 part 'user_card_model.g.dart';
 
 /// 雇主和同業配對用的卡片 Model
-/// 對應 user_cards view
+/// 對應 get_swipe_cards / get_users_public RPC 回傳欄位
 @freezed
 class UserCardModel with _$UserCardModel {
   const factory UserCardModel({

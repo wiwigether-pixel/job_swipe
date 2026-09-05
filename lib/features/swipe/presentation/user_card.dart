@@ -63,13 +63,6 @@ class UserCard extends StatelessWidget {
                           icon: Icons.people_outline,
                           label: userCard.companySize!,
                         ),
-                      if (userCard.expectedSalary != null)
-                        _InfoChip(
-                          icon: Icons.payments_outlined,
-                          label:
-                              '期望 ${(userCard.expectedSalary! / 1000).toStringAsFixed(0)}K',
-                          color: Colors.green,
-                        ),
                     ],
                   ),
 
