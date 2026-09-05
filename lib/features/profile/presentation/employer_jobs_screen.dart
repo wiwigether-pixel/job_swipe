@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/user_hydration.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────
@@ -135,22 +136,22 @@ class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111111),
+        backgroundColor: context.colors.surfaceAlt,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.white12),
+          side: BorderSide(color: context.colors.divider),
         ),
-        title: const Text('免費刊登額度已用完',
-            style: TextStyle(color: Colors.white)),
-        content: const Text(
+        title: Text('免費刊登額度已用完',
+            style: TextStyle(color: context.colors.textPrimary)),
+        content: Text(
           '你的免費刊登額度已用完。參加限時活動即可解鎖更多免費刊登名額。',
-          style: TextStyle(color: Colors.white54),
+          style: TextStyle(color: context.colors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('稍後',
-                style: TextStyle(color: Colors.white38)),
+            child: Text('稍後',
+                style: TextStyle(color: context.colors.textTertiary)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -172,7 +173,7 @@ class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
     final jobsAsync = ref.watch(employerJobsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -198,11 +199,11 @@ class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: Colors.white38),
+              Icon(Icons.error_outline,
+                  size: 48, color: context.colors.textTertiary),
               const SizedBox(height: 12),
               Text(e.toString(),
-                  style: const TextStyle(color: Colors.white38)),
+                  style: TextStyle(color: context.colors.textTertiary)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(employerJobsProvider),
@@ -277,20 +278,20 @@ class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111111),
+        backgroundColor: context.colors.surfaceAlt,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.white12),
+          side: BorderSide(color: context.colors.divider),
         ),
-        title: const Text('刪除職缺',
-            style: TextStyle(color: Colors.white)),
-        content: const Text('確定要刪除這個職缺嗎？此操作無法復原。',
-            style: TextStyle(color: Colors.white54)),
+        title: Text('刪除職缺',
+            style: TextStyle(color: context.colors.textPrimary)),
+        content: Text('確定要刪除這個職缺嗎？此操作無法復原。',
+            style: TextStyle(color: context.colors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消',
-                style: TextStyle(color: Colors.white38)),
+            child: Text('取消',
+                style: TextStyle(color: context.colors.textTertiary)),
           ),
           TextButton(
             onPressed: () async {
@@ -304,8 +305,8 @@ class _EmployerJobsScreenState extends ConsumerState<EmployerJobsScreen> {
                 );
               }
             },
-            child: const Text('刪除',
-                style: TextStyle(color: Color(0xFFFF4757))),
+            child: Text('刪除',
+                style: TextStyle(color: context.colors.danger)),
           ),
         ],
       ),
@@ -343,7 +344,7 @@ class _JobCard extends StatelessWidget {
         border: Border.all(
           color: isOpen
               ? themeColor.withValues(alpha: 0.3)
-              : Colors.white12,
+              : context.colors.divider,
         ),
       ),
       child: Column(
@@ -357,8 +358,8 @@ class _JobCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     job['title'] as String? ?? '未命名職缺',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -419,7 +420,7 @@ class _JobCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style:
-                    const TextStyle(color: Colors.white38, fontSize: 13),
+                    TextStyle(color: context.colors.textTertiary, fontSize: 13),
               ),
             ),
 
@@ -439,11 +440,11 @@ class _JobCard extends StatelessWidget {
               ),
               TextButton.icon(
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline,
-                    size: 16, color: Color(0xFFFF4757)),
-                label: const Text('刪除',
+                icon: Icon(Icons.delete_outline,
+                    size: 16, color: context.colors.danger),
+                label: Text('刪除',
                     style: TextStyle(
-                        color: Color(0xFFFF4757), fontSize: 13)),
+                        color: context.colors.danger, fontSize: 13)),
               ),
               const SizedBox(width: 4),
             ],
@@ -547,10 +548,10 @@ class _JobApplicantsState extends State<_JobApplicants> {
               ),
             )
           else if (_applicants.isEmpty)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Text('還沒有求職者對此職缺有興趣',
-                  style: TextStyle(color: Colors.white38, fontSize: 12)),
+                  style: TextStyle(color: context.colors.textTertiary, fontSize: 12)),
             )
           else
             ..._applicants.map((match) {
@@ -583,16 +584,16 @@ class _JobApplicantsState extends State<_JobApplicants> {
                         children: [
                           Text(
                             person?['display_name'] as String? ?? '未知',
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: context.colors.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500),
                           ),
                           if (skills.isNotEmpty)
                             Text(
                               skills.take(3).join(' · '),
-                              style: const TextStyle(
-                                  color: Colors.white38, fontSize: 11),
+                              style: TextStyle(
+                                  color: context.colors.textTertiary, fontSize: 11),
                             ),
                         ],
                       ),
@@ -618,9 +619,9 @@ class _MetaText extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: Colors.white38),
+        Icon(icon, size: 13, color: context.colors.textTertiary),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(color: Colors.white38, fontSize: 13)),
+        Text(text, style: TextStyle(color: context.colors.textTertiary, fontSize: 13)),
       ],
     );
   }
@@ -642,14 +643,14 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.work_outline,
               size: 80, color: themeColor.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
-          const Text('還沒有發布職缺',
+          Text('還沒有發布職缺',
               style: TextStyle(
-                  color: Colors.white,
+                  color: context.colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text('點擊下方按鈕新增你的第一個職缺',
-              style: TextStyle(color: Colors.white38)),
+          Text('點擊下方按鈕新增你的第一個職缺',
+              style: TextStyle(color: context.colors.textTertiary)),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: onAdd,
@@ -804,9 +805,9 @@ class _JobFormSheetState extends State<_JobFormSheet> {
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF111111),
+          color: context.colors.surfaceAlt,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: context.colors.divider),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -819,7 +820,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: context.colors.textTertiary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -849,8 +850,8 @@ class _JobFormSheetState extends State<_JobFormSheet> {
               // 工作類型
               DropdownButtonFormField<String>(
                 value: _jobType,
-                dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: context.colors.surface,
+                style: TextStyle(color: context.colors.textPrimary),
                 decoration: _inputDeco('工作類型', Icons.category, color),
                 items: _jobTypes.entries
                     .map((e) => DropdownMenuItem(
@@ -891,7 +892,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
               // 技能需求
               TextField(
                 controller: _skillController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: context.colors.textPrimary),
                 onSubmitted: (val) {
                   final trimmed = val.trim();
                   if (trimmed.isNotEmpty) {
@@ -911,7 +912,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
                   children: _skills
                       .map((s) => Chip(
                             label: Text(s,
-                                style: const TextStyle(color: Colors.white)),
+                                style: TextStyle(color: context.colors.textPrimary)),
                             backgroundColor: color.withValues(alpha: 0.15),
                             deleteIconColor: color,
                             onDeleted: () =>
@@ -967,7 +968,7 @@ class _JobFormSheetState extends State<_JobFormSheet> {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: context.colors.textPrimary),
       decoration: _inputDeco(label, icon, color),
     );
   }
@@ -975,13 +976,13 @@ class _JobFormSheetState extends State<_JobFormSheet> {
   InputDecoration _inputDeco(String label, IconData icon, Color color) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white54),
+      labelStyle: TextStyle(color: context.colors.textSecondary),
       prefixIcon: Icon(icon, color: color, size: 20),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
+      fillColor: context.colors.textPrimary.withValues(alpha: 0.05),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.white12),
+        borderSide: BorderSide(color: context.colors.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

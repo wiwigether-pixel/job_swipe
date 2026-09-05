@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/analytics/app_analytics.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../profile/presentation/employer_jobs_screen.dart';
 
 /// 行銷活動頁：把行銷網頁內容嵌入 Flutter（WebView）。
@@ -97,16 +98,16 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: context.colors.surfaceAlt,
         elevation: 0,
-        title: const Text(
+        title: Text(
           '限時活動',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              color: context.colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: context.colors.textPrimary),
       ),
       body: Stack(
         children: [

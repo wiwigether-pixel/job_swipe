@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/current_role_provider.dart';
 import '../../../core/providers/profile_provider.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/user_model.dart';
 import 'employer_jobs_screen.dart';
 
@@ -18,7 +19,7 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -45,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
             Center(child: CircularProgressIndicator(color: themeColor)),
         error: (e, _) => Center(
           child:
-              Text(e.toString(), style: const TextStyle(color: Colors.white38)),
+              Text(e.toString(), style: TextStyle(color: context.colors.textTertiary)),
         ),
         data: (profile) => profile == null
             ? const SizedBox.shrink()
@@ -170,18 +171,18 @@ class _ProfileBody extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF111111),
+        backgroundColor: context.colors.surfaceAlt,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.white12),
+          side: BorderSide(color: context.colors.divider),
         ),
-        title: const Text('確定要登出？',
-            style: TextStyle(color: Colors.white)),
+        title: Text('確定要登出？',
+            style: TextStyle(color: context.colors.textPrimary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child:
-                const Text('取消', style: TextStyle(color: Colors.white38)),
+                Text('取消', style: TextStyle(color: context.colors.textTertiary)),
           ),
           TextButton(
             onPressed: () async {
@@ -195,8 +196,8 @@ class _ProfileBody extends ConsumerWidget {
                 if (context.mounted) context.go('/welcome');
               }
             },
-            child: const Text('登出',
-                style: TextStyle(color: Color(0xFFFF4757))),
+            child: Text('登出',
+                style: TextStyle(color: context.colors.danger)),
           ),
         ],
       ),
@@ -292,9 +293,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF111111),
+          color: context.colors.surfaceAlt,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: context.colors.divider),
         ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -307,7 +308,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: context.colors.textTertiary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -335,7 +336,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
               // 技能
               TextField(
                 controller: _skillController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: context.colors.textPrimary),
                 onSubmitted: (val) {
                   final trimmed = val.trim();
                   if (trimmed.isNotEmpty) {
@@ -354,7 +355,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 children: _skills
                     .map((s) => Chip(
                           label: Text(s,
-                              style: const TextStyle(color: Colors.white)),
+                              style: TextStyle(color: context.colors.textPrimary)),
                           backgroundColor: color.withValues(alpha: 0.15),
                           deleteIconColor: color,
                           onDeleted: () =>
@@ -409,7 +410,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: context.colors.textPrimary),
       decoration: _inputDeco(label, icon, color),
     );
   }
@@ -417,13 +418,13 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   InputDecoration _inputDeco(String label, IconData icon, Color color) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white54),
+      labelStyle: TextStyle(color: context.colors.textSecondary),
       prefixIcon: Icon(icon, color: color, size: 20),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
+      fillColor: context.colors.textPrimary.withValues(alpha: 0.05),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.white12),
+        borderSide: BorderSide(color: context.colors.divider),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -467,8 +468,8 @@ class _AvatarSection extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           profile.displayName,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: context.colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -476,7 +477,7 @@ class _AvatarSection extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           profile.email,
-          style: const TextStyle(color: Colors.white38, fontSize: 13),
+          style: TextStyle(color: context.colors.textTertiary, fontSize: 13),
         ),
       ],
     );
@@ -528,7 +529,7 @@ class _InfoTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: Colors.white.withValues(alpha: 0.04),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Row(
         children: [
@@ -539,12 +540,12 @@ class _InfoTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: const TextStyle(
-                        color: Colors.white38, fontSize: 11)),
+                    style: TextStyle(
+                        color: context.colors.textTertiary, fontSize: 11)),
                 const SizedBox(height: 2),
                 Text(value,
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 14)),
+                    style: TextStyle(
+                        color: context.colors.textPrimary, fontSize: 14)),
               ],
             ),
           ),
@@ -567,7 +568,7 @@ class _SkillsSection extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: Colors.white.withValues(alpha: 0.04),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: context.colors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,9 +577,9 @@ class _SkillsSection extends StatelessWidget {
             children: [
               Icon(Icons.bolt, color: themeColor, size: 18),
               const SizedBox(width: 8),
-              const Text('技能',
+              Text('技能',
                   style:
-                      TextStyle(color: Colors.white38, fontSize: 11)),
+                      TextStyle(color: context.colors.textTertiary, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 10),
@@ -852,12 +853,12 @@ class _ToggleTile extends StatelessWidget {
             ? themeColor.withValues(alpha: 0.08)
             : Colors.white.withValues(alpha: 0.04),
         border: Border.all(
-          color: value ? themeColor.withValues(alpha: 0.3) : Colors.white12,
+          color: value ? themeColor.withValues(alpha: 0.3) : context.colors.divider,
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, color: value ? themeColor : Colors.white38, size: 20),
+          Icon(icon, color: value ? themeColor : context.colors.textTertiary, size: 20),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -866,7 +867,7 @@ class _ToggleTile extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: value ? Colors.white : Colors.white54,
+                    color: value ? context.colors.textPrimary : context.colors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -876,7 +877,7 @@ class _ToggleTile extends StatelessWidget {
                   style: TextStyle(
                     color: value
                         ? themeColor.withValues(alpha: 0.7)
-                        : Colors.white24,
+                        : context.colors.textTertiary,
                     fontSize: 11,
                   ),
                 ),
@@ -888,8 +889,8 @@ class _ToggleTile extends StatelessWidget {
             onChanged: onChanged,
             activeColor: themeColor,
             activeTrackColor: themeColor.withValues(alpha: 0.3),
-            inactiveThumbColor: Colors.white24,
-            inactiveTrackColor: Colors.white10,
+            inactiveThumbColor: context.colors.textTertiary,
+            inactiveTrackColor: context.colors.divider,
           ),
         ],
       ),

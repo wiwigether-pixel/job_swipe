@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'provider/onboarding_provider.dart';
 import '../welcome/connection_painter.dart';
+import 'package:job_swipe/core/theme/app_colors.dart';
 import 'package:job_swipe/core/utils/logger.dart';
 import 'package:job_swipe/core/providers/profile_provider.dart';
 
@@ -242,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final isLoading = ref.watch(onboardingNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -259,8 +260,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           Positioned.fill(
             child: SafeArea(
               child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                  ? Center(
+                      child: CircularProgressIndicator(color: context.colors.textPrimary),
                     )
                   : SingleChildScrollView(
                       padding: const EdgeInsets.all(30),
@@ -268,9 +269,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         children: [
                           Text(
                             widget.isRoleSwitch ? '建立$_roleLabel資料' : '建立個人名片',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 26,
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -278,8 +279,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           if (widget.isRoleSwitch)
                             Text(
                               '填寫完成後即可以$_roleLabel身份使用所有功能',
-                              style: const TextStyle(
-                                  color: Colors.white54, fontSize: 13),
+                              style: TextStyle(
+                                  color: context.colors.textSecondary, fontSize: 13),
                               textAlign: TextAlign.center,
                             ),
                           const SizedBox(height: 30),
@@ -293,7 +294,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                 height: 120,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white10,
+                                  color: context.colors.divider,
                                   border:
                                       Border.all(color: _themeColor, width: 2),
                                 ),
@@ -366,7 +367,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             TextField(
                               controller: _salaryController,
                               keyboardType: TextInputType.number,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: context.colors.textPrimary),
                               onChanged: (v) =>
                                   _expectedSalary = int.tryParse(v),
                               decoration: _inputStyle(
@@ -389,7 +390,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                 });
                               }
                             },
-                            style: const TextStyle(color: Colors.white),
+                            style: TextStyle(color: context.colors.textPrimary),
                             decoration: _inputStyle(
                               _isPeer ? '輸入技能/專長按 Enter' : '輸入技能按 Enter',
                               Icons.bolt,
@@ -405,7 +406,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                     backgroundColor:
                                         _themeColor.withValues(alpha: 0.2),
                                     labelStyle:
-                                        const TextStyle(color: Colors.white),
+                                        TextStyle(color: context.colors.textPrimary),
                                     onDeleted: () =>
                                         setState(() => _skills.remove(s)),
                                   ),
@@ -457,13 +458,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   InputDecoration _inputStyle(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
+      labelStyle: TextStyle(color: context.colors.textSecondary),
       prefixIcon: Icon(icon, color: _themeColor),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.05),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: Colors.white24),
+        borderSide: BorderSide(color: context.colors.textTertiary),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
@@ -481,7 +482,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: context.colors.textPrimary),
       decoration: _inputStyle(label, icon),
     );
   }
@@ -494,8 +495,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }) {
     return DropdownButtonFormField<String>(
       value: value,
-      dropdownColor: const Color(0xFF1A1A1A),
-      style: const TextStyle(color: Colors.white),
+      dropdownColor: context.colors.surface,
+      style: TextStyle(color: context.colors.textPrimary),
       decoration: _inputStyle(label, Icons.people),
       items: items
           .map((e) => DropdownMenuItem(value: e, child: Text(e)))
