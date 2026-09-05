@@ -149,54 +149,20 @@ class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
-  /// 抓取 profile，如果不存在就用本地暫存資料建立
+  /// 抓取 profile；不存在則由 DB 端用暫存資料建立（ensure_my_profile RPC）
   Future<UserModel> _fetchOrCreateProfile(String userId, String? email) async {
-    // 先嘗試抓現有 profile
-    final existing = await SupabaseConfig.client
-        .from('users')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
-
-    if (existing != null) {
-      logger.i('[Profile] ✅ 找到現有 profile');
-      final user = UserModel.fromSupabase(existing);
-      _currentUser = user;
-      return user;
-    }
-
-    // 沒有 profile：嘗試用本地暫存資料建立
-    logger.i('[Profile] 無現有 profile，嘗試從暫存建立...');
     final pending = await _loadPendingProfile();
 
-    if (pending == null) {
-      debugPrint('[Profile] ❌ 無暫存資料，無法建立 profile');
-      throw AppAuthException('找不到個人資料，請重新註冊', 'USER_PROFILE_NOT_FOUND');
-    }
-
-    logger.i('[Profile] 暫存資料: $pending');
-
-    // 建立 profile
-    await SupabaseConfig.client.from('users').insert({
-      'id': userId,
-      'role': pending['role'],
-      'display_name': pending['display_name'],
-      'email': email ?? pending['email'] ?? '',
+    final row = await SupabaseConfig.client.rpc('ensure_my_profile', params: {
+      'p_email': email ?? pending?['email'] ?? '',
+      'p_display_name': pending?['display_name'],
+      'p_role': pending?['role'],
     });
 
-    logger.i('[Profile] ✅ profile 建立成功');
+    // 暫存只用一次
+    if (pending != null) await _clearPendingProfile();
 
-    // 清除暫存（只用一次）
-    await _clearPendingProfile();
-
-    // 抓取剛建立的 profile 回傳
-    final data = await SupabaseConfig.client
-        .from('users')
-        .select()
-        .eq('id', userId)
-        .single();
-
-    final user = UserModel.fromSupabase(data);
+    final user = UserModel.fromSupabase(Map<String, dynamic>.from(row as Map));
     _currentUser = user;
     return user;
   }

@@ -15,12 +15,9 @@ final employerJobsProvider =
 final freeJobQuotaProvider = FutureProvider<int>((ref) async {
   final user = Supabase.instance.client.auth.currentUser;
   if (user == null) return 0;
-  final row = await Supabase.instance.client
-      .from('users')
-      .select('free_job_quota')
-      .eq('id', user.id)
-      .single();
-  return (row['free_job_quota'] as int?) ?? 0;
+  final rows = await Supabase.instance.client.rpc('get_my_profile') as List;
+  if (rows.isEmpty) return 0;
+  return ((rows.first as Map)['free_job_quota'] as int?) ?? 0;
 });
 
 /// 刊登額度不足時拋出，UI 端攔截後引導至行銷活動。
