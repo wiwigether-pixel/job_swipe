@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>JobSwipe 雇主限時活動</title>
+  <style>
+    :root { --accent: #2E7DEF; --accent2: #14669C; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+      background: #0A0A0A; color: #fff; min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    .hero {
+      padding: 56px 28px 40px;
+      background: linear-gradient(160deg, var(--accent) 0%, var(--accent2) 100%);
+      border-radius: 0 0 32px 32px;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block; padding: 6px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.18); font-size: 13px; letter-spacing: .5px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { font-size: 30px; line-height: 1.25; font-weight: 800; }
+    .hero p { margin-top: 12px; opacity: .9; font-size: 15px; line-height: 1.6; }
+    .countdown {
+      margin: 22px auto 0; display: flex; gap: 10px; justify-content: center;
+    }
+    .countdown .box {
+      background: rgba(0,0,0,.25); border-radius: 12px; padding: 10px 14px; min-width: 58px;
+    }
+    .countdown .num { font-size: 24px; font-weight: 800; }
+    .countdown .lbl { font-size: 11px; opacity: .8; margin-top: 2px; }
+    .perks { padding: 32px 28px 8px; display: grid; gap: 14px; }
+    .perk {
+      display: flex; align-items: center; gap: 14px;
+      background: #161616; border: 1px solid #232323; border-radius: 16px; padding: 16px;
+    }
+    .perk .ic { font-size: 24px; }
+    .perk .t { font-weight: 700; font-size: 15px; }
+    .perk .d { font-size: 13px; color: #9a9a9a; margin-top: 2px; }
+    .cta-wrap { padding: 20px 28px 36px; margin-top: auto; }
+    .cta {
+      width: 100%; border: none; border-radius: 16px; padding: 18px;
+      font-size: 17px; font-weight: 800; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 8px 24px rgba(46,125,239,.4);
+      transition: transform .12s ease;
+    }
+    .cta:active { transform: scale(.97); }
+    .joined { text-align: center; color: #0CBB78; font-weight: 700; padding-top: 14px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <span class="badge">雇主限定 · 限時 7 天</span>
+    <h1>免費刊登職缺<br/>搶先曝光給優質人才</h1>
+    <p>活動期間刊登職缺 0 元，履歷優先推送、加速招募，配對效率最高 +60%。</p>
+    <div class="countdown">
+      <div class="box"><div class="num" id="d">06</div><div class="lbl">天</div></div>
+      <div class="box"><div class="num" id="h">12</div><div class="lbl">時</div></div>
+      <div class="box"><div class="num" id="m">30</div><div class="lbl">分</div></div>
+    </div>
+  </div>
+
+  <div class="perks">
+    <div class="perk"><span class="ic">💰</span><div><div class="t">免刊登費</div><div class="d">活動期間發布職缺 0 元</div></div></div>
+    <div class="perk"><span class="ic">🚀</span><div><div class="t">職缺優先曝光</div><div class="d">你的職缺排在人才推薦前段班</div></div></div>
+    <div class="perk"><span class="ic">🔔</span><div><div class="t">配對即時通知</div><div class="d">人才對你的職缺有興趣馬上知道</div></div></div>
+  </div>
+
+  <div class="cta-wrap">
+    <button class="cta" id="joinBtn">立即免費刊登職缺</button>
+    <div class="joined" id="joined">✓ 已啟用免費刊登，正在前往發布職缺…</div>
+  </div>
+
+  <script>
+    // 倒數（純展示）
+    var total = 6 * 86400 + 12 * 3600 + 30 * 60;
+    setInterval(function () {
+      if (total <= 0) return;
+      total -= 1;
+      var d = Math.floor(total / 86400);
+      var h = Math.floor((total % 86400) / 3600);
+      var m = Math.floor((total % 3600) / 60);
+      document.getElementById('d').textContent = String(d).padStart(2, '0');
+      document.getElementById('h').textContent = String(h).padStart(2, '0');
+      document.getElementById('m').textContent = String(m).padStart(2, '0');
+    }, 1000);
+
+    // CTA：透過 JavaScriptChannel 回呼 Flutter 端，開啟真正的職缺刊登流程
+    document.getElementById('joinBtn').addEventListener('click', function () {
+      var payload = JSON.stringify({ action: 'join_campaign', campaign: 'employer_free_post_2026' });
+      if (window.FlutterBridge && window.FlutterBridge.postMessage) {
+        window.FlutterBridge.postMessage(payload);
+      }
+      document.getElementById('joined').style.display = 'block';
+      this.disabled = true;
+      this.style.opacity = '.5';
+      this.textContent = '已啟用';
+    });
+  </script>
+</body>
+</html>
